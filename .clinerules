@@ -1,0 +1,101 @@
+# Project Intelligence & Patterns
+
+## Core Workflow Patterns
+
+### Build System Structure
+- Use Makefile as primary orchestrator
+- Language-specific implementations abstracted behind common interface
+- Standard targets: build, test, package, deploy
+- Common interface must be maintained across all language implementations
+
+### Documentation Standards
+- All documentation in Markdown format
+- Mermaid diagrams for architecture visualization
+- Clear hierarchy in Memory Bank files
+- Regular updates to activeContext.md and progress.md
+
+### Development Workflow
+- Containerized development environments
+- Docker-based build isolation
+- Cache optimization at multiple levels
+- Cross-platform compatibility requirements
+
+## Key Implementation Patterns
+
+### Makefile Patterns
+- POSIX-compliant syntax required
+- Language-agnostic interface design
+- Support for parallel execution
+- Clear error reporting essential
+
+### Docker Patterns
+- Multi-stage builds preferred
+- Layer optimization required
+- Minimal base images
+- Efficient cache utilization
+
+### Pipeline Patterns
+- Template-based configurations
+- Environment-specific overrides
+- Fail-fast behavior
+- Comprehensive logging
+
+## Project Preferences
+
+### Naming Conventions
+- camelCase: variables, functions, methods
+- PascalCase: class names
+- snake_case: file names, directories
+- UPPER_CASE: environment variables
+
+### Code Organization
+- Modular, reusable components
+- Clear separation of concerns
+- Abstraction of language-specific details
+- Factory pattern for build implementations
+
+### Testing Approach
+- Language-specific test runners
+- Unified test reporting
+- Coverage tracking required
+- Integration testing across languages
+
+## Known Challenges
+
+### Cache Management
+- Complex invalidation strategies needed
+- Multiple cache layers to coordinate
+- Language-specific dependency caching
+- Build artifact caching
+
+### Cross-Platform Support
+- POSIX compliance required
+- Multiple language support
+- Container compatibility
+- Build environment consistency
+
+### Performance Requirements
+- 15-minute maximum build time
+- Parallel execution capability
+- Resource-aware scheduling
+- Efficient cache utilization
+
+## Learning Notes
+
+### Project Evolution
+- Started with Memory Bank structure
+- Architecture design prioritized
+- Build system implementation pending
+- Language support to be added incrementally
+
+### Critical Paths
+- Makefile template is foundation
+- Docker configurations essential
+- Pipeline setup dependent on both
+- Language support builds on base
+
+### Tool Usage
+- Memory Bank updates for all changes
+- Mermaid for architecture documentation
+- Docker for build isolation
+- GitLab for CI/CD orchestration
