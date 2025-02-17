@@ -6,31 +6,35 @@
 1. **Version Control & CI/CD**
    - GitLab for repository management and CI/CD
    - GitLab Container Registry for image storage
-   - GitLab Runners for pipeline execution
+   - GitLab Runners with Docker executor
+   - Template-based pipeline configuration
 
 2. **Build Systems**
    - Make for build orchestration
    - Language-specific build tools:
-     - CMake for C/C++
+     - CMake for C/C++ with Ninja generator
      - setuptools/pip for Python
      - Traditional Make for C
      - Module::Build for Perl
      - FPM for Fortran
 
 3. **Containerization**
-   - Docker for build environments
-   - Docker Compose for local development
-   - Container runtime optimization tools
+   - Docker with multi-stage builds
+   - Language-specific optimized images
+   - Build cache optimization
+   - Layer minimization strategies
 
 4. **Configuration Management**
-   - Ansible for automation
-   - Ansible Vault for secrets
-   - Dynamic inventory management
+   - Modular Makefile structure
+   - Environment-based configurations
+   - Docker build arguments
+   - GitLab CI/CD variables
 
-5. **Scripting & Automation**
-   - Python for tooling and automation
-   - Bash for system scripts
-   - Shell utilities for operations
+5. **Build Orchestration**
+   - Parallel job execution
+   - Language-specific implementations
+   - Standardized target interface
+   - Build artifact management
 
 ## Development Setup
 
@@ -39,58 +43,63 @@
 mindmap
   root((Development Tools))
     Version Control
-      Git
+      Git >= 2.x
       GitLab CLI
     Build Tools
-      Make
-      CMake
+      Make >= 4.x
+      CMake >= 3.25
       Python Tools
-      Perl Tools
-      Fortran Tools
+      Ninja Build
     Containers
-      Docker
+      Docker >= 20.x
       Docker Compose
-    Configuration
-      Ansible
-      Ansible Vault
     Languages
-      Python 3.x
+      Python >= 3.9
       C++17/20
-      Modern Perl
-      Fortran
-    Testing
-      pytest
-      GoogleTest
-      Test::More
+      Clang/GCC
 ```
 
 ### Environment Variables
-- `GITLAB_TOKEN` - GitLab API access
+- `CI_REGISTRY` - GitLab container registry URL
+- `CI_REGISTRY_IMAGE` - Full image repository path
+- `CI_PROJECT_PATH` - Project path in GitLab
+- `BUILD_TYPE` - Build configuration (Debug/Release)
+- `CMAKE_BUILD_TYPE` - CMake build type
 - `DOCKER_REGISTRY` - Container registry URL
-- `ANSIBLE_VAULT_PASSWORD_FILE` - Path to vault password
-- `BUILD_CACHE_DIR` - Build cache location
-- `CI_ENVIRONMENT` - Current environment (dev/staging/prod)
+- `DOCKER_TAG` - Image tag (default: latest)
+- `BUILD_DIR` - Build output directory
+- `DIST_DIR` - Distribution artifacts directory
+- `CCACHE_DIR` - Compiler cache directory
+- `VIRTUAL_ENV` - Python virtual environment path
+- `PYTHONPATH` - Python module search path
+- `PARALLEL_JOBS` - Number of parallel jobs
 
 ## Technical Constraints
 
 ### Build System
 1. **Makefile Requirements**
-   - POSIX-compliant Makefile syntax
+   - POSIX-compliant syntax
    - Support for parallel builds
    - Cross-platform compatibility
    - Clear error reporting
+   - Modular include structure
+   - Language-agnostic interface
 
 2. **Container Requirements**
-   - Minimal base images
-   - Layer optimization
-   - Multi-stage builds
-   - Build cache efficiency
+   - Debian-based minimal images
+   - Multi-stage build optimization
+   - Layer caching strategy
+   - Build argument flexibility
+   - Common base image
+   - Health checks
 
 3. **Pipeline Requirements**
-   - Fail-fast behavior
-   - Clear error reporting
-   - Efficient resource usage
-   - Comprehensive logging
+   - Parallel job execution
+   - Artifact management
+   - Coverage reporting
+   - Build matrices
+   - Environment deployments
+   - Template inheritance
 
 ### Dependencies
 
@@ -98,74 +107,76 @@ mindmap
 - Git >= 2.x
 - Docker >= 20.x
 - Make >= 4.x
-- Python >= 3.8
-- Ansible >= 2.9
+- Python >= 3.9
+- CMake >= 3.25
+- Ninja Build
 
 #### Language Dependencies
 1. **C++**
    - Modern C++ compiler (GCC/Clang)
-   - CMake >= 3.x
+   - CMake >= 3.25
+   - Ninja build system
+   - ccache
    - Boost libraries (optional)
 
 2. **Python**
+   - Python 3.9 or higher
    - virtualenv/venv
-   - pip
+   - pip with wheel support
    - pytest for testing
    - black for formatting
-
-3. **Perl**
-   - Modern Perl >= 5.30
-   - Module::Build
-   - Test::More
-
-4. **Fortran**
-   - Modern Fortran compiler
-   - FPM (Fortran Package Manager)
+   - pylint for linting
 
 ## Performance Requirements
 
 ### Build Performance
 - Maximum build time: 15 minutes
-- Parallel job execution where possible
-- Efficient use of build cache
-- Resource-aware job scheduling
+- Parallel job execution
+- Compiler cache utilization
+- Layer cache optimization
+- Resource-aware scheduling
 
 ### Pipeline Performance
+- Parallel language builds
+- Efficient artifact handling
+- Template-based configuration
+- Smart dependency management
 - Fast feedback cycles
-- Efficient use of GitLab Runners
-- Optimized container lifecycle
-- Smart caching strategies
 
 ## Security Considerations
 
 ### Access Control
-- Principle of least privilege
-- Role-based access control
-- Secure credential management
+- Protected CI/CD variables
+- Registry access control
+- Runner security
 - Environment isolation
 
 ### Container Security
+- Minimal base images
 - Regular security updates
-- Image scanning
-- Runtime security
-- Network policies
+- Layer optimization
+- Multi-stage builds
+- Reduced attack surface
 
 ### CI/CD Security
 - Protected branches
 - Secure variables
-- Artifact signing
-- Deployment controls
+- Build isolation
+- Artifact security
+- Environment controls
 
 ## Monitoring & Logging
 
 ### Build Monitoring
-- Build time metrics
-- Resource usage tracking
-- Error rate monitoring
+- Job execution times
 - Cache hit rates
+- Resource utilization
+- Error tracking
+- Build success rates
 
 ### Pipeline Monitoring
-- Job success rates
-- Runner utilization
-- Queue time metrics
-- Environment health
+- Stage completion times
+- Runner performance
+- Job parallelization
+- Resource consumption
+- Cache effectiveness
