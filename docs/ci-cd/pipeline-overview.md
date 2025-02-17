@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The CI/CD pipeline provides a template-based approach to building, testing, and deploying projects. It uses PROJECT_TYPE to determine the appropriate runner and environment, leveraging GitLab CI/CD with Docker executors for consistent environments.
+The CI/CD pipeline provides a template-based approach to building, testing, and deploying projects. It uses PROJECT_TYPE to determine the appropriate runner and environment, leveraging GitLab CI/CD with Docker executors for consistent environments. If you're migrating from language-specific jobs (.build-cpp, .build-python), see the [Migration Guide](../build-system/migration-guide.md).
 
 ```mermaid
 flowchart TD
@@ -39,6 +39,9 @@ flowchart TD
 │   └── python.gitlab-ci.yml   # Python runner configuration
 └── .gitlab-ci.yml            # Project-specific configuration
 ```
+
+### Migration Note
+Previous approach used language-specific jobs and runners explicitly. The new approach uses PROJECT_TYPE to automatically select the appropriate runner. See the [Migration Guide](../build-system/migration-guide.md) for details on transitioning existing pipelines.
 
 ### Stage Descriptions
 
@@ -287,6 +290,7 @@ variables:
 | Cache miss | Verify cache key |
 | Build fail | Check make targets |
 | Runner offline | Contact support |
+| Migration issues | See [Migration Guide](../build-system/migration-guide.md) |
 
 ### Debugging
 ```bash
@@ -303,3 +307,4 @@ gitlab-runner exec docker job-name
 - [Parallel Execution](parallel-execution.md)
 - [Caching Strategy](caching-strategy.md)
 - [Build System Overview](../build-system/overview.md)
+- [Migration Guide](../build-system/migration-guide.md) - For transitioning from language-specific jobs

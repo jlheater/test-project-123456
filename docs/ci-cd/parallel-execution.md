@@ -2,7 +2,7 @@
 
 ## Overview
 
-Parallel job execution in GitLab CI/CD allows simultaneous processing of independent tasks, significantly reducing pipeline execution time. This guide covers strategies for implementing and optimizing parallel execution with project-specific runners.
+Parallel job execution in GitLab CI/CD allows simultaneous processing of independent tasks, significantly reducing pipeline execution time. This guide covers strategies for implementing and optimizing parallel execution with project-specific runners. If you're migrating from language-specific jobs (.build-cpp, .build-python), see the [Migration Guide](../build-system/migration-guide.md).
 
 ```mermaid
 flowchart TD
@@ -281,6 +281,7 @@ workflow:
 | Resource contention | Over-parallelization | Adjust parallel jobs |
 | Cache conflicts | Shared cache keys | Use distinct keys |
 | Runner overload | Too many jobs | Configure job limits |
+| Migration issues | Incorrect setup | See [Migration Guide](../build-system/migration-guide.md) |
 
 ### Debug Configuration
 ```yaml
@@ -320,4 +321,5 @@ build:parallel:
 
 - [Pipeline Overview](pipeline-overview.md)
 - [Job Templates](job-templates.md)
+- [Migration Guide](../build-system/migration-guide.md) - For transitioning from language-specific jobs
 - [Caching Strategy](caching-strategy.md)

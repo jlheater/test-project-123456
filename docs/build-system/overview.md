@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The build system uses generic make targets that standardize build operations across different programming languages, with project-specific implementations. This architecture enables consistent build, test, package, and deployment processes regardless of the underlying technology.
+The build system uses generic make targets that standardize build operations across different programming languages, with project-specific implementations. This architecture enables consistent build, test, package, and deployment processes regardless of the underlying technology. For projects migrating from the previous build system, see the [Migration Guide](migration-guide.md).
 
 ```mermaid
 flowchart TD
@@ -38,22 +38,30 @@ flowchart TD
 - Manages environment setup
 - Handles dependencies
 
+For example implementations, see [C++ Builds](cpp-builds.md) or [Python Builds](python-builds.md).
+
 ### 2. Project Type Configuration
 - Specified in .gitlab-ci.yml
 - Determines runner selection
 - Configures build environment
 - Sets up tool chain
 
+See [Job Templates](../ci-cd/job-templates.md) for CI/CD configuration examples.
+
 ### 3. Runner Selection
 - base: Common development tools
 - cpp: C++ development environment
 - python: Python development environment
+
+For runner configuration details, see [Pipeline Overview](../ci-cd/pipeline-overview.md#runner-configuration).
 
 ### 4. Docker Integration
 - Containerized build environments
 - Consistent toolchain versions
 - Isolated dependencies
 - Cross-platform compatibility
+
+See [Docker Environment](../docker/base-image.md) for container configuration details.
 
 ## Standard Targets
 
@@ -70,6 +78,8 @@ flowchart LR
     Make --> Artifacts["Build Artifacts"]
     Setup --> Artifacts
 ```
+
+For detailed target documentation, see [Makefile Targets](makefile-targets.md).
 
 ### Test Process
 ```mermaid
@@ -103,6 +113,8 @@ BUILD_TYPE="Release"          # Build configuration
 PARALLEL_JOBS="4"            # Parallel execution
 ```
 
+For caching configuration, see [Caching Strategy](../ci-cd/caching-strategy.md).
+
 ## Implementation Details
 
 ### 1. Build Process
@@ -129,6 +141,8 @@ PARALLEL_JOBS="4"            # Parallel execution
 - Deployment execution
 - Status reporting
 
+For parallel execution strategies, see [Parallel Execution](../ci-cd/parallel-execution.md).
+
 ## Extension Points
 
 ### New Project Setup
@@ -136,6 +150,8 @@ PARALLEL_JOBS="4"            # Parallel execution
 2. Specify PROJECT_TYPE in .gitlab-ci.yml
 3. Configure build environment
 4. Add project documentation
+
+For migration from existing projects, see the [Migration Guide](migration-guide.md).
 
 ### Project Customization
 1. Override default variables
@@ -159,11 +175,15 @@ PARALLEL_JOBS="4"            # Parallel execution
 - Implement clear test structure
 - Handle dependencies consistently
 
+For detailed C++ guidelines, see [C++ Builds](cpp-builds.md).
+
 #### Python Projects
 - Support both setup.py (3.9) and pyproject.toml (3.11+)
 - Use virtual environments
 - Implement nox for newer projects
 - Manage dependencies effectively
+
+For detailed Python guidelines, see [Python Builds](python-builds.md).
 
 ### Docker Usage
 - Use provided runners
@@ -179,11 +199,15 @@ PARALLEL_JOBS="4"            # Parallel execution
 - Cache utilization
 - Resource allocation
 
+For detailed caching strategies, see [Caching Strategy](../ci-cd/caching-strategy.md).
+
 ### Common Issues
 - Missing dependencies
 - Environment conflicts
 - Path issues
 - Permission problems
+
+For troubleshooting help, see [Build Problems](../troubleshooting/build-problems.md).
 
 ## Next Steps
 
@@ -192,9 +216,11 @@ PARALLEL_JOBS="4"            # Parallel execution
    - [C++ Builds](cpp-builds.md)
    - [Python Builds](python-builds.md)
 3. Learn about [Docker environments](../docker/base-image.md)
+4. If migrating, follow the [Migration Guide](migration-guide.md)
 
 ## Additional Resources
 
 - [Installation Guide](../getting-started/installation.md)
 - [Quick Start Guide](../getting-started/quickstart.md)
 - [Troubleshooting](../troubleshooting/build-problems.md)
+- [Migration Guide](migration-guide.md)

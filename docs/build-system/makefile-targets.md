@@ -1,5 +1,7 @@
 # Makefile Targets Reference
 
+This document describes the standard make targets that all projects must implement, regardless of programming language. If you're migrating from the previous build system (using .build-cpp or .build-python targets), see the [Migration Guide](migration-guide.md).
+
 ## Standard Targets
 
 These targets represent the common interface that all projects must implement, regardless of their programming language.
@@ -28,6 +30,8 @@ make build BUILD_TYPE=Debug VERBOSE=1
 ```
 
 ## Project Type Examples
+
+The following examples show how to implement the standard targets for different project types. For help migrating existing projects to this format, see the [Migration Guide](migration-guide.md).
 
 ### C++ Project Implementation
 
@@ -264,6 +268,7 @@ make build && make test && make package
 ## See Also
 
 - [Build System Overview](overview.md)
-- [C++ Build Guide](cpp-builds.md)
-- [Python Build Guide](python-builds.md)
+- [Migration Guide](migration-guide.md) - For transitioning from language-specific targets
+- [C++ Build Guide](cpp-builds.md) - Detailed C++ implementation examples
+- [Python Build Guide](python-builds.md) - Detailed Python implementation examples
 - [Docker Configuration](../docker/base-image.md)

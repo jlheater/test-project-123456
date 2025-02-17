@@ -2,7 +2,7 @@
 
 ## Overview
 
-Job templates provide reusable job configurations that can be extended and customized for specific use cases. The system uses PROJECT_TYPE to determine the appropriate runner and environment for each job.
+Job templates provide reusable job configurations that can be extended and customized for specific use cases. The system uses PROJECT_TYPE to determine the appropriate runner and environment for each job. If you're migrating from language-specific jobs (.build-cpp, .build-python), see the [Migration Guide](../build-system/migration-guide.md).
 
 ## Base Templates
 
@@ -20,6 +20,9 @@ Job templates provide reusable job configurations that can be extended and custo
   tags:
     - $PROJECT_TYPE  # Automatically selects appropriate runner
 ```
+
+### Migration Note
+Previous templates used explicit language-specific jobs. The new approach uses PROJECT_TYPE to automatically select runners and environments. See the [Migration Guide](../build-system/migration-guide.md) for details on updating existing templates.
 
 ### Stage Templates
 ```mermaid
@@ -278,6 +281,7 @@ custom:job:
 | Wrong runner | Invalid PROJECT_TYPE | Check PROJECT_TYPE setting |
 | Build fails | Missing dependencies | Verify environment setup |
 | Test fails | Wrong configuration | Check test settings |
+| Migration issues | Incorrect job setup | Follow [Migration Guide](../build-system/migration-guide.md) |
 
 ### Debug Tips
 ```yaml
@@ -291,5 +295,6 @@ custom:job:
 ## See Also
 
 - [Pipeline Overview](pipeline-overview.md)
+- [Migration Guide](../build-system/migration-guide.md) - For transitioning from language-specific jobs
 - [Parallel Execution](parallel-execution.md)
 - [Caching Strategy](caching-strategy.md)
