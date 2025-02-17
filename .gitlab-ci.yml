@@ -1,0 +1,79 @@
+# Include all pipeline configurations
+include:
+  - local: .gitlab/ci/base.gitlab-ci.yml
+  - local: .gitlab/ci/cpp.gitlab-ci.yml
+  - local: .gitlab/ci/python.gitlab-ci.yml
+
+# Workflow rules to control when pipelines run
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - if: $CI_MERGE_REQUEST_ID
+      when: always
+    - when: never
+
+# Global variables
+variables:
+  GIT_STRATEGY: fetch
+  GIT_CLEAN_FLAGS: -ffdx
+
+# Docker build jobs for base images
+docker:base:
+  stage: .pre
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/base:latest -f docker/base/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/base:latest
+  rules:
+    - changes:
+        - docker/base/Dockerfile
+      when: always
+    - when: manual
+
+docker:cpp:
+  stage: .pre
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/cpp:latest -f docker/cpp/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/cpp:latest
+  rules:
+    - changes:
+        - docker/cpp/Dockerfile
+      when: always
+    - when: manual
+
+docker:python:
+  stage: .pre
+  image: docker:stable
+  services:
+    - docker:dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/python:latest -f docker/python/Dockerfile .
+    - docker push $CI_REGISTRY_IMAGE/python:latest
+  rules:
+    - changes:
+        - docker/python/Dockerfile
+      when: always
+    - when: manual

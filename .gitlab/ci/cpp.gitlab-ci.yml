@@ -1,0 +1,67 @@
+# C++ specific job templates
+.cpp_job:
+  image: $CI_REGISTRY_IMAGE/cpp:latest
+  variables:
+    CMAKE_BUILD_TYPE: $BUILD_TYPE
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+  cache:
+    <<: *global_cache
+    paths:
+      - .ccache/
+      - build/cpp/
+      - dist/cpp/
+
+# C++ build jobs
+cpp:build:
+  extends:
+    - .build_template
+    - .cpp_job
+  script:
+    - make .build-cpp
+  parallel:
+    matrix:
+      - BUILD_TYPE: [Debug, Release]
+
+# C++ test jobs
+cpp:test:
+  extends:
+    - .test_template
+    - .cpp_job
+  needs:
+    - cpp:build
+  script:
+    - make .test-cpp
+  coverage: '/lines:\s+(\d+\.\d+\%)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/cpp/coverage.xml
+      junit: build/cpp/test-results.xml
+
+# C++ package jobs
+cpp:package:
+  extends:
+    - .package_template
+    - .cpp_job
+  needs:
+    - cpp:test
+  script:
+    - make .package-cpp
+  artifacts:
+    paths:
+      - dist/cpp/
+    expire_in: 1 month
+
+# C++ deploy jobs
+cpp:deploy:
+  extends:
+    - .deploy_template
+    - .cpp_job
+  needs:
+    - cpp:package
+  script:
+    - make .deploy-cpp
+  environment:
+    name: production
+    url: https://$CI_PROJECT_PATH

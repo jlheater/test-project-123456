@@ -1,0 +1,79 @@
+# Python specific job templates
+.python_job:
+  image: $CI_REGISTRY_IMAGE/python:latest
+  variables:
+    PYTHONPATH: $CI_PROJECT_DIR
+    VIRTUAL_ENV: $CI_PROJECT_DIR/.venv
+    PATH: "$VIRTUAL_ENV/bin:$PATH"
+  cache:
+    <<: *global_cache
+    paths:
+      - .venv/
+      - build/python/
+      - dist/python/
+      - .pytest_cache/
+      - __pycache__/
+
+# Python build jobs
+python:build:
+  extends:
+    - .build_template
+    - .python_job
+  before_script:
+    - make .venv-init
+    - make .pip-install
+  script:
+    - make .build-python
+
+# Python test jobs
+python:test:
+  extends:
+    - .test_template
+    - .python_job
+  needs:
+    - python:build
+  before_script:
+    - make .venv-init
+    - make .pip-install
+  script:
+    - make .test-python
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/python/coverage.xml
+      junit: build/python/test-results.xml
+
+# Python package jobs
+python:package:
+  extends:
+    - .package_template
+    - .python_job
+  needs:
+    - python:test
+  before_script:
+    - make .venv-init
+    - make .pip-install
+  script:
+    - make .package-python
+  artifacts:
+    paths:
+      - dist/python/
+    expire_in: 1 month
+
+# Python deploy jobs
+python:deploy:
+  extends:
+    - .deploy_template
+    - .python_job
+  needs:
+    - python:package
+  before_script:
+    - make .venv-init
+    - make .pip-install
+  script:
+    - make .deploy-python
+  environment:
+    name: production
+    url: https://$CI_PROJECT_PATH
