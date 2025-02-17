@@ -220,7 +220,6 @@ For troubleshooting help, see [Build Problems](../troubleshooting/build-problems
 
 ## Additional Resources
 
-- [Installation Guide](../getting-started/installation.md)
-- [Quick Start Guide](../getting-started/quickstart.md)
+- [Getting Started Guide](../getting-started/getting-started.md)
 - [Troubleshooting](../troubleshooting/build-problems.md)
 - [Migration Guide](migration-guide.md)

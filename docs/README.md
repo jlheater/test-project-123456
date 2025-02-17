@@ -12,9 +12,8 @@ This documentation covers the build system and CI/CD pipeline implementation for
 ## Documentation Structure
 
 ### 📚 [Getting Started](getting-started/)
-- [Installation Requirements](getting-started/requirements.md)
-- [Installation Guide](getting-started/installation.md)
-- [Quick Start Guide](getting-started/quickstart.md)
+- [System Requirements](getting-started/requirements.md)
+- [Getting Started Guide](getting-started/getting-started.md)
 
 ### 🔧 [Build System](build-system/)
 - [System Overview](build-system/overview.md)
@@ -78,7 +77,7 @@ variables:
 ### Available Runners
 - `base`: Common tools and utilities
 - `cpp`: C++ development environment (Make/CMake)
-- `python`: Python development environment (3.9/3.11+)
+- `python`: Python development environment (3.11+)
 
 ## Developer vs Build Engineer Guides
 
@@ -88,7 +87,7 @@ For day-to-day development operations such as:
 - Building and testing locally
 - Updating project CI/CD configuration
 
-See the [Installation Guide](getting-started/installation.md#developer-guide) and [Quick Start Guide](getting-started/quickstart.md#developer-quickstart).
+See the [Getting Started Guide](getting-started/getting-started.md#quick-start) for developer documentation.
 
 ### Build Engineer Documentation
 For infrastructure and tooling updates such as:
@@ -96,11 +95,11 @@ For infrastructure and tooling updates such as:
 - Docker environment updates
 - GitLab runner configuration
 
-See the [Installation Guide](getting-started/installation.md#build-engineer-guide) and [Docker Environment](docker/base-image.md#build-engineer-setup) documentation.
+See the [Getting Started Guide](getting-started/getting-started.md#build-engineer-guide) and [Docker Environment](docker/base-image.md#build-engineer-setup) documentation.
 
 ## Contributing
 
-See our [contribution guidelines](getting-started/installation.md#contributing) for information on how to add support for new languages or extend existing functionality.
+See our [Getting Started Guide](getting-started/getting-started.md#developer-guide) for information on how to add support for new languages or extend existing functionality.
 
 ## Support
 

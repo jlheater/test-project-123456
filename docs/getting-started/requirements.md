@@ -32,12 +32,12 @@
 ### Required Software
 | Software | Minimum Version | Description |
 |----------|----------------|-------------|
-| Git | 2.x | Version control system |
-| Docker | 20.x | Container runtime |
-| Make | 4.x | Build orchestration |
-| Python | 3.9+ | Python development |
-| CMake | 3.25+ | C++ build system |
-| Ninja | Latest | Build system for C++ |
+| Git | 2.40+ | Version control system |
+| Docker | 24.x | Container runtime |
+| Make | 4.4+ | Build orchestration |
+| Python | 3.11+ | Python development |
+| CMake | 3.27+ | C++ build system |
+| Ninja | 1.11+ | Build system for C++ |
 
 ### GitLab Integration
 - GitLab account with repository access
@@ -47,20 +47,22 @@
 ## Language-Specific Requirements
 
 ### C++ Development
-- Modern C++ compiler (GCC 9+ or Clang 10+)
-- CMake 3.25 or higher
-- Ninja build system
-- ccache (recommended)
-- Boost libraries (optional)
+- GCC >= 12.0 or Clang >= 16.0
+- CMake 3.27 or higher
+- Ninja build system >= 1.11
+- ccache >= 4.8
+- Boost libraries >= 1.83 (optional)
+- GoogleTest >= 1.14 (for testing)
 
 ### Python Development
-- Python 3.9 or higher
-- virtualenv/venv
-- pip with wheel support
+- Python 3.11 or higher
+- virtualenv/venv >= 20.24
+- pip >= 23.2 with wheel support
 - Development packages:
-  - pytest for testing
-  - black for formatting
-  - pylint for linting
+  - pytest >= 7.4 for testing
+  - black >= 23.7 for formatting
+  - pylint >= 3.0 for linting
+  - coverage >= 7.3 for code coverage
 
 ## Environment Variables
 
@@ -131,6 +133,7 @@ export PYTHONPATH="$PWD"
 - Docker stats
 - Resource monitoring
 - Network tools
+- prometheus-client >= 0.17
 
 ## Network Requirements
 
@@ -181,6 +184,5 @@ If you encounter issues with the requirements:
 ## Next Steps
 
 Once all requirements are met:
-1. Proceed to [Installation Guide](installation.md)
-2. Review the [Quick Start Guide](quickstart.md)
-3. Set up your first project
+1. Proceed to [Getting Started Guide](getting-started.md)
+2. Set up your first project

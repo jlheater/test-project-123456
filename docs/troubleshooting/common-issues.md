@@ -291,4 +291,4 @@ docker inspect container_name
 
 - [Build Problems](build-problems.md)
 - [Pipeline Debugging](pipeline-debugging.md)
-- [Installation Guide](../getting-started/installation.md)
+- [Getting Started Guide](../getting-started/getting-started.md)
