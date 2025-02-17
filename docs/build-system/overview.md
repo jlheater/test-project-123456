@@ -2,18 +2,20 @@
 
 ## Architecture
 
-The build system is designed around a language-agnostic interface that standardizes build operations across different programming languages. This architecture enables consistent build, test, package, and deployment processes regardless of the underlying technology.
+The build system uses generic make targets that standardize build operations across different programming languages, with project-specific implementations. This architecture enables consistent build, test, package, and deployment processes regardless of the underlying technology.
 
 ```mermaid
 flowchart TD
     subgraph Interface["Common Interface"]
-        Make["Makefile"] --> Common["common.mk"]
-        Common --> Targets["Standard Targets"]
+        Make["Generic Makefile Targets"]
+        Type["PROJECT_TYPE"]
     end
 
-    subgraph Languages["Language Implementations"]
-        Common --> CPP["cpp.mk"]
-        Common --> Python["python.mk"]
+    subgraph Project["Project Implementation"]
+        Impl["Project-Specific Makefile"]
+        Make --> Impl
+        Type --> Runner["Runner Selection"]
+        Runner --> Impl
     end
 
     subgraph Docker["Container Environment"]
@@ -25,29 +27,27 @@ flowchart TD
         Base --> PyEnv
     end
 
-    CPP --> CPPEnv
-    Python --> PyEnv
+    Runner --> Docker
 ```
 
 ## Core Components
 
-### 1. Main Makefile
-- Provides standardized top-level targets
-- Includes language-specific implementations
-- Manages build orchestration
-- Handles environment setup
+### 1. Project Makefile
+- Implements standardized targets (build, test, etc.)
+- Contains project-specific build logic
+- Manages environment setup
+- Handles dependencies
 
-### 2. Common Utilities (common.mk)
-- Shared functions and variables
-- Environment detection
-- Directory management
-- Logging and error handling
+### 2. Project Type Configuration
+- Specified in .gitlab-ci.yml
+- Determines runner selection
+- Configures build environment
+- Sets up tool chain
 
-### 3. Language-Specific Makefiles
-- Implement standard targets for each language
-- Handle language-specific build tools
-- Manage dependencies
-- Configure test environments
+### 3. Runner Selection
+- base: Common development tools
+- cpp: C++ development environment
+- python: Python development environment
 
 ### 4. Docker Integration
 - Containerized build environments
@@ -60,47 +60,39 @@ flowchart TD
 ### Build Process
 ```mermaid
 flowchart LR
-    Build["make build"] --> Lang{"Language Type"}
-    Lang -->|C++| CPP[".build-cpp"]
-    Lang -->|Python| PY[".build-python"]
+    Build["make build"] --> Type{"PROJECT_TYPE"}
+    Type -->|cpp| CPP["C++ Runner"]
+    Type -->|python| PY["Python Runner"]
     
-    CPP --> CMake["CMake Build"]
-    PY --> Setup["Python Setup"]
+    CPP --> Make["Make/CMake"]
+    PY --> Setup["setup.py/pyproject.toml"]
     
-    CMake --> Artifacts["Build Artifacts"]
+    Make --> Artifacts["Build Artifacts"]
     Setup --> Artifacts
 ```
 
 ### Test Process
 ```mermaid
 flowchart LR
-    Test["make test"] --> Lang{"Language Type"}
-    Lang -->|C++| CPP[".test-cpp"]
-    Lang -->|Python| PY[".test-python"]
+    Test["make test"] --> Type{"PROJECT_TYPE"}
+    Type -->|cpp| CPP["C++ Runner"]
+    Type -->|python| PY["Python Runner"]
     
-    CPP --> GoogleTest["GoogleTest"]
-    PY --> PyTest["pytest"]
+    CPP --> Tests["Project Tests"]
+    PY --> Tests
     
-    GoogleTest --> Results["Test Results"]
-    PyTest --> Results
+    Tests --> Results["Test Results"]
 ```
 
 ## Environment Management
 
-### Directory Structure
+### Project Structure
 ```
 project/
-├── Makefile           # Main interface
-├── make/
-│   ├── common.mk     # Shared utilities
-│   ├── cpp.mk        # C++ implementation
-│   └── python.mk     # Python implementation
+├── Makefile           # Project-specific implementation
+├── .gitlab-ci.yml     # CI/CD and project type configuration
 ├── build/            # Build artifacts
-│   ├── cpp/
-│   └── python/
 └── dist/             # Distribution packages
-    ├── cpp/
-    └── python/
 ```
 
 ### Environment Variables
@@ -114,7 +106,7 @@ PARALLEL_JOBS="4"            # Parallel execution
 ## Implementation Details
 
 ### 1. Build Process
-- Language detection and validation
+- Runner selection via PROJECT_TYPE
 - Tool and dependency verification
 - Build environment preparation
 - Artifact generation
@@ -139,37 +131,45 @@ PARALLEL_JOBS="4"            # Parallel execution
 
 ## Extension Points
 
-### Adding New Languages
-1. Create language-specific makefile
-2. Implement standard targets
-3. Add Docker environment
-4. Update documentation
+### New Project Setup
+1. Create project Makefile implementing standard targets
+2. Specify PROJECT_TYPE in .gitlab-ci.yml
+3. Configure build environment
+4. Add project documentation
 
-### Customizing Builds
+### Project Customization
 1. Override default variables
 2. Add custom targets
-3. Extend existing targets
+3. Extend standard targets
 4. Configure environment
 
 ## Best Practices
 
-### Build System Usage
-- Use language-specific targets when possible
-- Leverage parallel builds
-- Maintain clean dependencies
-- Follow naming conventions
+### Project Structure
+- Implement all standard targets (build, test, etc.)
+- Keep build logic in Makefile
+- Set PROJECT_TYPE in .gitlab-ci.yml
+- Document build requirements
 
-### Docker Integration
-- Use provided base images
-- Maintain minimal images
-- Optimize layer caching
+### Language-Specific Practices
+
+#### C++ Projects
+- Support both Make and CMake builds
+- Use ccache for compilation
+- Implement clear test structure
+- Handle dependencies consistently
+
+#### Python Projects
+- Support both setup.py (3.9) and pyproject.toml (3.11+)
+- Use virtual environments
+- Implement nox for newer projects
+- Manage dependencies effectively
+
+### Docker Usage
+- Use provided runners
+- Keep local builds clean
+- Follow runner documentation
 - Handle dependencies efficiently
-
-### Environment Configuration
-- Set required variables
-- Use consistent paths
-- Manage tool versions
-- Document overrides
 
 ## Performance Considerations
 

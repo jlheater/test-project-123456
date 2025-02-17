@@ -1,5 +1,32 @@
 # System Requirements
 
+## Table of Contents
+- [Core Dependencies](#core-dependencies)
+  - [Required Software](#required-software)
+  - [GitLab Integration](#gitlab-integration)
+- [Language-Specific Requirements](#language-specific-requirements)
+  - [C++ Development](#c-development)
+  - [Python Development](#python-development)
+- [Environment Variables](#environment-variables)
+  - [Required Variables](#required-variables)
+  - [Optional Variables](#optional-variables)
+- [System Resources](#system-resources)
+  - [Minimum Requirements](#minimum-requirements)
+  - [Recommended](#recommended)
+- [Operating System Support](#operating-system-support)
+  - [Linux](#linux)
+  - [macOS](#macos)
+  - [Windows](#windows)
+- [Additional Tools](#additional-tools-recommended)
+  - [Development Tools](#development-tools)
+  - [Monitoring Tools](#monitoring-tools)
+- [Network Requirements](#network-requirements)
+  - [Connectivity](#connectivity)
+  - [Firewall Rules](#firewall-rules)
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
+- [Next Steps](#next-steps)
+
 ## Core Dependencies
 
 ### Required Software

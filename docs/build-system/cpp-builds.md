@@ -2,60 +2,111 @@
 
 ## Overview
 
-The C++ build system uses CMake with Ninja as the generator, providing fast, parallel builds with ccache integration for optimal performance. The system is containerized using Docker for consistent build environments.
+This guide covers two main approaches for C++ build systems:
+1. Traditional Make builds (currently used in existing projects)
+2. CMake builds (recommended for new projects)
+
+Both approaches implement the standard make targets (build, test, package, deploy) while providing project-specific build logic.
 
 ## Build System Components
 
 ```mermaid
 flowchart TD
-    subgraph Make["Makefile Interface"]
-        CPP[".build-cpp"]
-        Test[".test-cpp"]
-        Pack[".package-cpp"]
+    subgraph Interface["Generic Interface"]
+        Build[make build]
+        Test[make test]
+        Pack[make package]
     end
 
-    subgraph CMake["CMake Build"]
-        Config["Configure"]
-        Generate["Generate"]
-        Build["Build"]
+    subgraph Implementation["Project Implementation"]
+        Make["Regular Make"]
+        CMake["CMake + Ninja"]
         
-        Config --> Generate
-        Generate --> Build
+        subgraph Tools["Build Tools"]
+            CCache["ccache"]
+            Compiler["GCC/Clang"]
+        end
     end
 
-    subgraph Tools["Build Tools"]
-        Ninja["Ninja"]
-        CCache["ccache"]
-        Compiler["GCC/Clang"]
-    end
-
-    CPP --> Config
-    Generate --> Ninja
-    Ninja --> Compiler
-    Compiler --> CCache
+    Build & Test & Pack --> Make
+    Build & Test & Pack --> CMake
+    Make & CMake --> Tools
 ```
 
-## Directory Structure
+## Project Structures
 
+### Make-Based Project
 ```
 project/
-├── CMakeLists.txt          # Main CMake configuration
-├── src/                    # Source files
-│   └── CMakeLists.txt     # Source build rules
-├── include/               # Public headers
-├── tests/                 # Test files
-│   └── CMakeLists.txt    # Test build rules
-├── build/                 # Build output
-│   └── cpp/              # C++ specific output
-└── dist/                 # Distribution packages
-    └── cpp/              # C++ packages
+├── Makefile              # Generic targets implementation
+├── src/                  # Source files
+├── include/             # Public headers
+├── tests/               # Test files
+├── build/               # Build output
+└── dist/                # Distribution packages
 ```
 
-## CMake Configuration
+### CMake-Based Project
+```
+project/
+├── Makefile             # Generic targets implementation
+├── CMakeLists.txt       # CMake configuration
+├── src/                 # Source files
+│   └── CMakeLists.txt  # Source build rules
+├── include/            # Public headers
+├── tests/              # Test files
+│   └── CMakeLists.txt # Test build rules
+├── build/              # Build output
+└── dist/               # Distribution packages
+```
 
-### Base Configuration
+## Make-Based Projects
+
+### Example Makefile
+```makefile
+# Makefile for traditional Make build
+
+.PHONY: build test package deploy clean
+
+# Variables
+CXX ?= g++
+CXXFLAGS += -Wall -Wextra -std=c++17
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+
+# Source files
+SRCS := $(wildcard src/*.cpp)
+OBJS := $(SRCS:src/%.cpp=$(BUILD_DIR)/%.o)
+
+# Targets
+build: $(BUILD_DIR)/program
+
+$(BUILD_DIR)/program: $(OBJS)
+    $(CXX) $(OBJS) -o $@
+
+$(BUILD_DIR)/%.o: src/%.cpp
+    @mkdir -p $(BUILD_DIR)
+    $(CXX) $(CXXFLAGS) -c $< -o $@
+
+test:
+    ./$(BUILD_DIR)/program --test
+
+package:
+    @mkdir -p $(DIST_DIR)
+    tar -czf $(DIST_DIR)/program.tar.gz -C $(BUILD_DIR) program
+
+deploy:
+    # Implementation specific
+
+clean:
+    rm -rf $(BUILD_DIR) $(DIST_DIR)
+```
+
+## CMake-Based Projects
+
+### Base CMakeLists.txt
 ```cmake
-# CMakeLists.txt
+# Main CMakeLists.txt
 cmake_minimum_required(VERSION 3.25)
 project(YourProject VERSION 1.0.0)
 
@@ -77,71 +128,70 @@ add_compile_options(
 
 # Enable testing
 enable_testing()
+
+# Add subdirectories
+add_subdirectory(src)
+add_subdirectory(tests)
 ```
 
-### Build Options
+### Example Makefile
+```makefile
+# Makefile for CMake project
+
+.PHONY: build test package deploy clean
+
+# Variables
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+BUILD_TYPE ?= Release
+PARALLEL_JOBS ?= 4
+
+# Targets
+build:
+    @mkdir -p $(BUILD_DIR)
+    cd $(BUILD_DIR) && cmake -G Ninja \
+        -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) \
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
+    cmake --build $(BUILD_DIR) -j$(PARALLEL_JOBS)
+
+test:
+    cd $(BUILD_DIR) && ctest --output-on-failure
+
+package:
+    cd $(BUILD_DIR) && cpack
+
+deploy:
+    # Implementation specific
+
+clean:
+    rm -rf $(BUILD_DIR) $(DIST_DIR)
+```
+
+## Build Options
+
+### Common Variables
+```makefile
+# Build configuration
+BUILD_TYPE=Release    # Release or Debug
+VERBOSE=1            # Enable verbose output
+PARALLEL_JOBS=4      # Number of parallel jobs
+
+# Compiler settings
+CXX=g++             # or clang++
+CXXFLAGS="-O2"      # Compiler flags
+```
+
+### CMake-Specific Options
 ```cmake
 option(BUILD_TESTS "Build test suite" ON)
 option(ENABLE_CCACHE "Enable ccache support" ON)
 option(USE_BOOST "Enable Boost libraries" OFF)
 ```
 
-## Make Targets
-
-### Primary Targets
-
-| Target | Description | Dependencies |
-|--------|-------------|--------------|
-| `.build-cpp` | Build C++ components | `.cmake-init` |
-| `.test-cpp` | Run C++ tests | `.build-cpp` |
-| `.package-cpp` | Create packages | `.build-cpp` |
-| `.clean-cpp` | Clean build artifacts | None |
-
-### Helper Targets
-
-| Target | Description | Usage |
-|--------|-------------|-------|
-| `.cmake-init` | Initialize CMake | `make .cmake-init` |
-| `.docker-cpp-build` | Build Docker image | `make .docker-cpp-build` |
-
-## Build Process
-
-### 1. CMake Initialization
-```bash
-# Initialize CMake project
-make .cmake-init
-
-# With custom generator
-make .cmake-init CMAKE_GENERATOR="Unix Makefiles"
-```
-
-### 2. Building
-```bash
-# Standard build
-make .build-cpp
-
-# Debug build
-make .build-cpp BUILD_TYPE=Debug
-
-# Parallel build
-make .build-cpp -j4
-```
-
-### 3. Testing
-```bash
-# Run all tests
-make .test-cpp
-
-# Run with coverage
-make .test-cpp COVERAGE=1
-
-# Run specific test
-make .test-cpp ARGS="--gtest_filter=TestSuite.TestCase"
-```
-
 ## Docker Integration
 
-### Build Environment
+Both build approaches use the same C++ Docker environment:
+
 ```dockerfile
 # docker/cpp/Dockerfile
 FROM base:latest
@@ -154,58 +204,24 @@ RUN apt-get update && apt-get install -y \
     ccache
 ```
 
-### Using Docker Build
-```bash
-# Build in container
-make .build-cpp DOCKER=1
-
-# Custom image
-make .build-cpp DOCKER_IMAGE=custom/cpp:latest
-```
-
-## Configuration Options
-
-### Build Variables
-```makefile
-# Build type
-CMAKE_BUILD_TYPE=Release    # Release, Debug, RelWithDebInfo
-
-# Generator
-CMAKE_GENERATOR="Ninja"     # Ninja, "Unix Makefiles"
-
-# Compiler
-CXX=g++                    # g++, clang++
-
-# Parallel jobs
-PARALLEL_JOBS=4            # Number of parallel jobs
-```
-
-### Cache Configuration
-```makefile
-# Cache directory
-CCACHE_DIR=.ccache
-
-# Cache size
-CCACHE_MAXSIZE=10G
-
-# Cache compression
-CCACHE_COMPRESS=1
-```
-
 ## Dependency Management
 
 ### System Dependencies
 ```bash
-# Install build dependencies
+# Essential build tools
 apt-get install -y \
     build-essential \
     cmake \
     ninja-build \
-    ccache \
-    libboost-all-dev
+    ccache
+
+# Optional libraries
+apt-get install -y \
+    libboost-all-dev \
+    libgtest-dev
 ```
 
-### External Dependencies
+### CMake External Dependencies
 ```cmake
 # Find external packages
 find_package(Boost REQUIRED)
@@ -222,67 +238,63 @@ target_link_libraries(${PROJECT_NAME}
 ## Best Practices
 
 ### Build Configuration
-- Use Ninja generator for faster builds
-- Enable ccache for compilation
+- Enable ccache for both Make and CMake builds
+- Use consistent compiler flags
 - Set appropriate parallel jobs
-- Use consistent build types
+- Implement all standard targets
 
-### CMake Style
-- Modern CMake practices
-- Target-based approach
-- Clear dependency management
-- Proper version requirements
+### Make Projects
+- Use explicit dependencies
+- Maintain clear variable structure
+- Handle subdirectories properly
+- Support test frameworks
 
-### Testing
-- Comprehensive test suite
-- Coverage tracking
-- Clear test organization
-- Regular test execution
+### CMake Projects
+- Use modern CMake practices
+- Apply target-based approach
+- Handle dependencies properly
+- Support proper testing
 
 ## Common Issues
 
-### Build Errors
-| Error | Cause | Solution |
-|-------|-------|----------|
-| CMake not found | Missing CMake | Install CMake |
-| Compiler error | Wrong compiler version | Update compiler |
-| Ninja error | Missing Ninja | Install Ninja |
-| Cache miss | Invalid cache | Clear ccache |
+### Build Problems
+| Issue | Solution |
+|-------|----------|
+| Missing dependencies | Install required packages |
+| Compiler errors | Check compiler version/flags |
+| Link errors | Verify library paths |
+| Cache misses | Clear ccache if needed |
 
 ### Performance Issues
-- High build times
-- Cache inefficiency
-- Resource constraints
-- Dependency problems
+- Enable parallel builds
+- Use ccache effectively
+- Optimize dependency builds
+- Monitor resource usage
 
 ## Examples
 
-### Basic Build
+### Basic Usage
 ```bash
-# Clean build
-make .clean-cpp
-make .build-cpp
+# Regular build
+make build
 
-# Debug build with coverage
-make .build-cpp BUILD_TYPE=Debug COVERAGE=1
+# Debug build
+make build BUILD_TYPE=Debug
+
+# Run tests
+make test
+
+# Create package
+make package
 ```
 
-### Test Execution
+### Testing Options
 ```bash
-# All tests
-make .test-cpp
+# Make project tests
+make test TEST_ARGS="MyTestSuite"
 
-# Specific test suite
-make .test-cpp ARGS="--gtest_filter=Math.*"
-```
-
-### Package Creation
-```bash
-# Create release package
-make .package-cpp BUILD_TYPE=Release
-
-# With version
-make .package-cpp VERSION=1.0.0
+# CMake project tests
+make test CTEST_ARGS="--output-on-failure"
 ```
 
 ## See Also

@@ -4,7 +4,7 @@
 
 This documentation covers the build system and CI/CD pipeline implementation for multi-language projects supporting C++ and Python, with extensible support for C, Perl, and Fortran. The system provides:
 
-- Language-agnostic build interface through Make
+- Generic build targets with project-specific implementations
 - Containerized build environments using Docker
 - Modular GitLab CI/CD pipeline configuration
 - Parallel job execution and optimization
@@ -40,21 +40,17 @@ This documentation covers the build system and CI/CD pipeline implementation for
 
 ## Quick Reference
 
-### Key Make Targets
+### Standard Make Targets
 ```bash
-make build       # Build all language targets
-make test        # Run all tests
-make package     # Create distribution packages
-make deploy      # Deploy packages
+make build       # Build project
+make test        # Run project tests
+make package     # Create distribution package
+make deploy      # Deploy package
 ```
 
 ### Directory Structure
 ```
-├── Makefile           # Main build orchestrator
-├── make/             # Make components
-│   ├── common.mk     # Shared utilities
-│   ├── cpp.mk        # C++ specific rules
-│   └── python.mk     # Python specific rules
+├── Makefile           # Project-specific build implementation
 ├── docker/           # Docker environments
 │   ├── base/         # Base image
 │   ├── cpp/          # C++ environment
@@ -63,19 +59,44 @@ make deploy      # Deploy packages
     └── ci/           # Pipeline templates
 ```
 
-### Common Operations
+### Project Setup
 
-#### Build Specific Language
-```bash
-make .build-cpp     # Build C++ projects
-make .build-python  # Build Python projects
+#### C++ Projects
+```yaml
+# .gitlab-ci.yml
+variables:
+  PROJECT_TYPE: cpp  # Use C++ runner
 ```
 
-#### Test Specific Language
-```bash
-make .test-cpp      # Test C++ projects
-make .test-python   # Test Python projects
+#### Python Projects
+```yaml
+# .gitlab-ci.yml
+variables:
+  PROJECT_TYPE: python  # Use Python runner
 ```
+
+### Available Runners
+- `base`: Common tools and utilities
+- `cpp`: C++ development environment (Make/CMake)
+- `python`: Python development environment (3.9/3.11+)
+
+## Developer vs Build Engineer Guides
+
+### Developer Documentation
+For day-to-day development operations such as:
+- Making repository changes
+- Building and testing locally
+- Updating project CI/CD configuration
+
+See the [Installation Guide](getting-started/installation.md#developer-guide) and [Quick Start Guide](getting-started/quickstart.md#developer-quickstart).
+
+### Build Engineer Documentation
+For infrastructure and tooling updates such as:
+- Pipeline template modifications
+- Docker environment updates
+- GitLab runner configuration
+
+See the [Installation Guide](getting-started/installation.md#build-engineer-guide) and [Docker Environment](docker/base-image.md#build-engineer-setup) documentation.
 
 ## Contributing
 

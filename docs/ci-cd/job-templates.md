@@ -2,7 +2,7 @@
 
 ## Overview
 
-Job templates provide reusable job configurations that can be extended and customized for specific use cases. They help maintain consistency across jobs and reduce configuration duplication.
+Job templates provide reusable job configurations that can be extended and customized for specific use cases. The system uses PROJECT_TYPE to determine the appropriate runner and environment for each job.
 
 ## Base Templates
 
@@ -10,14 +10,15 @@ Job templates provide reusable job configurations that can be extended and custo
 ```yaml
 # .gitlab/ci/base.gitlab-ci.yml
 .base_job:
-  image: $CI_REGISTRY_IMAGE/base:latest
+  image: $CI_REGISTRY_IMAGE/$PROJECT_TYPE:latest
   interruptible: true
   cache: &global_cache
     paths:
       - build/
-      - .ccache/
-      - .venv/
+      - dist/
     policy: pull-push
+  tags:
+    - $PROJECT_TYPE  # Automatically selects appropriate runner
 ```
 
 ### Stage Templates
@@ -28,11 +29,12 @@ flowchart TD
     Base --> Package[".package_template"]
     Base --> Deploy[".deploy_template"]
     
-    Build --> CPP["cpp:build"]
-    Build --> Python["python:build"]
+    subgraph Runner["Runner Selection"]
+        Type["PROJECT_TYPE"] --> CPP["cpp runner"]
+        Type --> Python["python runner"]
+    end
     
-    Test --> CPPTest["cpp:test"]
-    Test --> PythonTest["python:test"]
+    Build & Test & Package --> Runner
 ```
 
 ## Build Templates
@@ -42,6 +44,8 @@ flowchart TD
 .build_template:
   extends: .base_job
   stage: build
+  script:
+    - make build
   artifacts:
     paths:
       - build/
@@ -49,33 +53,24 @@ flowchart TD
     expire_in: 1 week
 ```
 
-### Language-Specific Builds
+### Environment-Specific Variables
 
-#### C++ Build
+#### C++ Environment
 ```yaml
-.cpp_build_template:
-  extends: .build_template
-  image: $CI_REGISTRY_IMAGE/cpp:latest
-  variables:
-    CMAKE_BUILD_TYPE: Release
-  before_script:
-    - mkdir -p build/cpp
-  script:
-    - make .build-cpp
+# Set in .gitlab-ci.yml
+variables:
+  PROJECT_TYPE: cpp
+  BUILD_TYPE: Release
+  CCACHE_DIR: .ccache
 ```
 
-#### Python Build
+#### Python Environment
 ```yaml
-.python_build_template:
-  extends: .build_template
-  image: $CI_REGISTRY_IMAGE/python:latest
-  variables:
-    VIRTUAL_ENV: $CI_PROJECT_DIR/.venv
-  before_script:
-    - python -m venv $VIRTUAL_ENV
-    - source $VIRTUAL_ENV/bin/activate
-  script:
-    - make .build-python
+# Set in .gitlab-ci.yml
+variables:
+  PROJECT_TYPE: python
+  VIRTUAL_ENV: .venv
+  PYTHONPATH: src
 ```
 
 ## Test Templates
@@ -85,6 +80,8 @@ flowchart TD
 .test_template:
   extends: .base_job
   stage: test
+  script:
+    - make test
   coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
   artifacts:
     reports:
@@ -94,30 +91,23 @@ flowchart TD
       junit: test-results.xml
 ```
 
-### Language-Specific Tests
+### Test Arguments
 
-#### C++ Tests
+#### C++ Test Options
 ```yaml
-.cpp_test_template:
+test:
   extends: .test_template
-  image: $CI_REGISTRY_IMAGE/cpp:latest
   variables:
-    GTEST_COLOR: "1"
-  script:
-    - make .test-cpp
-  coverage: '/lines:\s+(\d+\.\d+\%)/'
+    TEST_ARGS: "--gtest_filter=TestSuite.*"
 ```
 
-#### Python Tests
+#### Python Test Options
 ```yaml
-.python_test_template:
+test:
   extends: .test_template
-  image: $CI_REGISTRY_IMAGE/python:latest
   variables:
-    PYTEST_ADDOPTS: "--color=yes"
-  script:
-    - make .test-python
-  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
+    PYTEST_ARGS: "-v --cov=src"
+    NOX_SESSION: "tests"  # For Python 3.11+ projects
 ```
 
 ## Package Templates
@@ -127,30 +117,12 @@ flowchart TD
 .package_template:
   extends: .base_job
   stage: package
+  script:
+    - make package
   artifacts:
     paths:
       - dist/
     expire_in: 1 month
-```
-
-### Language-Specific Packaging
-
-#### C++ Package
-```yaml
-.cpp_package_template:
-  extends: .package_template
-  image: $CI_REGISTRY_IMAGE/cpp:latest
-  script:
-    - make .package-cpp
-```
-
-#### Python Package
-```yaml
-.python_package_template:
-  extends: .package_template
-  image: $CI_REGISTRY_IMAGE/python:latest
-  script:
-    - make .package-python
 ```
 
 ## Deploy Templates
@@ -160,6 +132,8 @@ flowchart TD
 .deploy_template:
   extends: .base_job
   stage: deploy
+  script:
+    - make deploy
   rules:
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -194,25 +168,34 @@ flowchart TD
 
 ## Using Templates
 
-### Basic Extension
+### Basic Project Setup
 ```yaml
-cpp:build:
-  extends: .cpp_build_template
-  variables:
-    CMAKE_BUILD_TYPE: Debug
+# .gitlab-ci.yml
+include:
+  - local: .gitlab/ci/base.gitlab-ci.yml
 
-python:test:
-  extends: .python_test_template
-  variables:
-    PYTEST_ADDOPTS: "-v --cov"
+variables:
+  PROJECT_TYPE: cpp  # or 'python'
+
+# Standard jobs using templates
+build:
+  extends: .build_template
+
+test:
+  extends: .test_template
+
+package:
+  extends: .package_template
 ```
 
-### Multiple Extensions
+### Custom Configuration
 ```yaml
-cpp:deploy:staging:
-  extends:
-    - .cpp_package_template
-    - .deploy_staging_template
+# Custom build job
+build:
+  extends: .build_template
+  variables:
+    BUILD_TYPE: Debug  # For C++ projects
+    PARALLEL_JOBS: 4
 ```
 
 ## Template Customization
@@ -250,16 +233,16 @@ custom:job:
 ## Best Practices
 
 ### Template Design
-- Keep templates focused
-- Use meaningful names
+- Use PROJECT_TYPE for runner selection
+- Keep templates generic
+- Provide clear defaults
 - Document variables
-- Provide defaults
 
-### Extension
-- Extend appropriately
-- Override carefully
-- Document changes
-- Maintain consistency
+### Project Configuration
+- Set PROJECT_TYPE explicitly
+- Use appropriate runners
+- Configure environment variables
+- Handle artifacts properly
 
 ### Maintenance
 - Regular updates
@@ -274,12 +257,8 @@ custom:job:
 .matrix_template:
   parallel:
     matrix:
-      - VARIABLE: [value1, value2]
-
-matrix:job:
-  extends: .matrix_template
-  script:
-    - echo $VARIABLE
+      - BUILD_TYPE: [Debug, Release]  # For C++ projects
+      - PYTHON_VERSION: [3.9, 3.11]  # For Python projects
 ```
 
 ### Conditional Jobs
@@ -296,9 +275,9 @@ matrix:job:
 ### Common Issues
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| Template not found | Wrong path | Check include path |
-| Variable undefined | Missing definition | Define in variables |
-| Script override fails | Wrong syntax | Check YAML format |
+| Wrong runner | Invalid PROJECT_TYPE | Check PROJECT_TYPE setting |
+| Build fails | Missing dependencies | Verify environment setup |
+| Test fails | Wrong configuration | Check test settings |
 
 ### Debug Tips
 ```yaml

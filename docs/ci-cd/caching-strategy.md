@@ -2,23 +2,26 @@
 
 ## Overview
 
-Effective caching is crucial for pipeline performance. This guide covers different caching strategies for Docker layers, build artifacts, dependencies, and compiler outputs.
+Effective caching is crucial for pipeline performance. This guide covers caching strategies based on project type, including Docker layers, build artifacts, dependencies, and compiler outputs.
 
 ```mermaid
 flowchart TD
-    Build["Build Process"] --> Cache["Cache Types"]
+    Project["PROJECT_TYPE"] --> Cache["Cache Types"]
     
     subgraph Cache["Cache Strategy"]
         Docker["Docker Layers"]
-        Compiler["Compiler Cache"]
+        Build["Build Cache"]
         Deps["Dependencies"]
-        Artifacts["Build Artifacts"]
+        Tool["Tool-Specific"]
     end
     
-    Docker --> Pull["Pull Policy"]
-    Compiler --> CCache["ccache"]
-    Deps --> Key["Cache Keys"]
-    Artifacts --> Policy["Retention Policy"]
+    subgraph Types["Project Types"]
+        CPP["cpp"]
+        Python["python"]
+    end
+    
+    Project --> Types
+    Types --> Cache
 ```
 
 ## Cache Types
@@ -26,11 +29,13 @@ flowchart TD
 ### GitLab CI Cache
 ```yaml
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: ${CI_COMMIT_REF_SLUG}-${PROJECT_TYPE}
   paths:
     - build/
-    - .ccache/
-    - .venv/
+    - dist/
+    # Project-specific paths
+    - .ccache/     # For C++ projects
+    - .venv/       # For Python projects
   policy: pull-push
 ```
 
@@ -38,37 +43,48 @@ cache:
 ```dockerfile
 # Optimize layer caching
 FROM base:latest
-COPY requirements.txt .
-RUN pip install -r requirements.txt
-COPY . .
+ARG PROJECT_TYPE
+
+# Project-specific installations
+RUN if [ "$PROJECT_TYPE" = "cpp" ]; then \
+        apt-get install -y build-essential cmake; \
+    elif [ "$PROJECT_TYPE" = "python" ]; then \
+        apt-get install -y python3-venv; \
+    fi
 ```
 
-### Compiler Cache
+### Build Cache
 ```yaml
 variables:
+  # C++ projects
   CCACHE_DIR: ${CI_PROJECT_DIR}/.ccache
   CCACHE_MAXSIZE: "1G"
+  
+  # Python projects
+  PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.pip-cache
 ```
 
 ## Cache Configuration
 
 ### Cache Keys
 ```yaml
-# Simple key
+# Project-type based key
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: ${PROJECT_TYPE}-${CI_COMMIT_REF_SLUG}
 
-# File-based key
+# File-based key with project type
 cache:
   key:
     files:
       - Makefile
-      - cmake/
-      - requirements.txt
+      # Project-specific files
+      - CMakeLists.txt      # For C++ projects
+      - pyproject.toml      # For Python projects
+    prefix: ${PROJECT_TYPE}
 
 # Complex key
 cache:
-  key: ${CI_COMMIT_REF_SLUG}-${CI_JOB_NAME}
+  key: ${PROJECT_TYPE}-${CI_COMMIT_REF_SLUG}-${CI_JOB_NAME}
 ```
 
 ### Cache Policies
@@ -77,43 +93,48 @@ cache:
 cache:
   policy: pull
 
-# Push-only cache
+# Push-only cache (for cache warming)
 cache:
   policy: push
 
-# Pull-push cache
+# Standard pull-push cache
 cache:
   policy: pull-push
 ```
 
-## Language-Specific Caching
+## Project-Specific Caching
 
-### C++ Cache Strategy
+### C++ Project Cache
 ```yaml
-.cpp_cache:
-  cache:
-    key: cpp-${CI_COMMIT_REF_SLUG}
-    paths:
-      - build/cpp/
-      - .ccache/
-      - cmake/
-    policy: pull-push
+variables:
+  PROJECT_TYPE: cpp
+
+cache:
+  key: cpp-${CI_COMMIT_REF_SLUG}
+  paths:
+    - build/
+    - dist/
+    - .ccache/
+  policy: pull-push
   variables:
     CCACHE_DIR: ${CI_PROJECT_DIR}/.ccache
 ```
 
-### Python Cache Strategy
+### Python Project Cache
 ```yaml
-.python_cache:
-  cache:
-    key: python-${CI_COMMIT_REF_SLUG}
-    paths:
-      - .venv/
-      - pip-cache/
-      - __pycache__/
-    policy: pull-push
+variables:
+  PROJECT_TYPE: python
+
+cache:
+  key: python-${CI_COMMIT_REF_SLUG}
+  paths:
+    - build/
+    - dist/
+    - .venv/
+    - .pip-cache/
+  policy: pull-push
   variables:
-    PIP_CACHE_DIR: ${CI_PROJECT_DIR}/pip-cache
+    PIP_CACHE_DIR: ${CI_PROJECT_DIR}/.pip-cache
 ```
 
 ## Optimization Techniques
@@ -121,9 +142,9 @@ cache:
 ### Layer Optimization
 ```mermaid
 flowchart TD
-    Base["Base Image"] --> Common["Common Layer"]
-    Common --> Lang["Language Layer"]
-    Lang --> Deps["Dependencies"]
+    Base["Base Image"] --> Type["PROJECT_TYPE Layer"]
+    Type --> Tools["Build Tools"]
+    Tools --> Deps["Dependencies"]
     Deps --> Source["Source Code"]
 ```
 
@@ -133,8 +154,12 @@ flowchart TD
 cache:warm:
   stage: .pre
   script:
-    - mkdir -p .ccache
-    - mkdir -p .venv
+    - |
+      if [ "$PROJECT_TYPE" = "cpp" ]; then
+        mkdir -p .ccache
+      elif [ "$PROJECT_TYPE" = "python" ]; then
+        mkdir -p .venv .pip-cache
+      fi
   cache:
     policy: push
 ```
@@ -142,9 +167,9 @@ cache:warm:
 ### Fallback Caching
 ```yaml
 cache:
-  - key: ${CI_COMMIT_REF_SLUG}
+  - key: ${PROJECT_TYPE}-${CI_COMMIT_REF_SLUG}
     paths: [.cache/]
-  - key: default-cache
+  - key: ${PROJECT_TYPE}-default
     paths: [.cache/]
     policy: pull
 ```
@@ -152,19 +177,19 @@ cache:
 ## Best Practices
 
 ### Cache Organization
-- Separate caches by language
-- Use meaningful cache keys
-- Set appropriate policies
-- Regular cache cleanup
+- Use PROJECT_TYPE in cache keys
+- Separate build and dependency caches
+- Set appropriate retention policies
+- Implement regular cleanup
 
 ### Performance Optimization
-- Minimize cache size
-- Optimize paths
-- Use compression
-- Monitor cache hits
+- Optimize cache sizes
+- Use appropriate paths
+- Enable compression
+- Monitor cache effectiveness
 
 ### Maintenance
-- Regular pruning
+- Regular cache pruning
 - Version tracking
 - Space monitoring
 - Hit rate analysis
@@ -177,63 +202,42 @@ docker-build:
   variables:
     DOCKER_BUILDKIT: "1"
   script:
-    - docker build --cache-from $CI_REGISTRY_IMAGE:latest .
+    - docker build --build-arg PROJECT_TYPE=${PROJECT_TYPE} 
+      --cache-from $CI_REGISTRY_IMAGE/${PROJECT_TYPE}:latest .
 ```
 
 ### BuildKit Cache
 ```dockerfile
 # syntax=docker/dockerfile:1.4
 FROM base AS builder
-RUN --mount=type=cache,target=/root/.cache/pip pip install ...
-```
+ARG PROJECT_TYPE
 
-## Dependency Caching
-
-### Package Management
-```yaml
-# NPM cache
-cache:
-  paths:
-    - .npm/
-
-# Pip cache
-cache:
-  paths:
-    - .pip-cache/
-
-# Gradle cache
-cache:
-  paths:
-    - .gradle/
-```
-
-### Vendor Directories
-```yaml
-cache:
-  paths:
-    - vendor/
-    - node_modules/
-    - .venv/
+RUN --mount=type=cache,target=/root/.cache \
+    if [ "$PROJECT_TYPE" = "python" ]; then \
+        --mount=type=cache,target=/root/.cache/pip pip install ...; \
+    fi
 ```
 
 ## Build Caching
 
-### Compiler Cache
+### Tool-Specific Cache
 ```yaml
-.ccache_config:
-  variables:
-    CCACHE_DIR: ${CI_PROJECT_DIR}/.ccache
-    CCACHE_MAXSIZE: "1G"
-    CCACHE_COMPRESS: "true"
+.tool_cache:
   cache:
+    key: ${PROJECT_TYPE}-tools
     paths:
+      # C++ tools
       - .ccache/
+      # Python tools
+      - .pip-cache/
+      - __pycache__/
 ```
 
 ### Build Artifacts
 ```yaml
 .build_cache:
   cache:
+    key: ${PROJECT_TYPE}-build
     paths:
       - build/
       - dist/
@@ -245,18 +249,23 @@ cache:
 ### Common Issues
 | Issue | Cause | Solution |
 |-------|-------|----------|
+| Wrong cache | Invalid PROJECT_TYPE | Verify PROJECT_TYPE |
 | Cache miss | Invalid key | Check key generation |
 | Cache corruption | Partial upload | Clear cache |
 | Space issues | Large cache | Set size limits |
-| Slow cache | Network/Size | Optimize paths |
 
 ### Debug Tools
 ```yaml
 .cache_debug:
   before_script:
-    - ls -la .ccache/
-    - ccache -s
-    - du -sh .venv/
+    - |
+      if [ "$PROJECT_TYPE" = "cpp" ]; then
+        ls -la .ccache/
+        ccache -s
+      elif [ "$PROJECT_TYPE" = "python" ]; then
+        ls -la .venv/
+        pip cache info
+      fi
 ```
 
 ## Monitoring
@@ -265,9 +274,17 @@ cache:
 ```yaml
 .cache_stats:
   after_script:
-    - ccache -s
-    - du -sh .ccache/
-    - du -sh .venv/
+    - |
+      case $PROJECT_TYPE in
+        cpp)
+          ccache -s
+          du -sh .ccache/
+          ;;
+        python)
+          du -sh .venv/
+          pip cache info
+          ;;
+      esac
 ```
 
 ### Performance Metrics
@@ -281,22 +298,19 @@ cache:
 
 ## Examples
 
-### Complex Cache Strategy
+### Multi-Cache Strategy
 ```yaml
 .multi_cache:
   cache:
-    - key: 
-        files:
-          - Makefile
-          - CMakeLists.txt
+    - key: ${PROJECT_TYPE}-${CI_COMMIT_REF_SLUG}-tools
+      paths:
+        - .ccache/    # For C++
+        - .venv/      # For Python
+      policy: pull-push
+    - key: ${PROJECT_TYPE}-${CI_COMMIT_REF_SLUG}-build
       paths:
         - build/
-        - .ccache/
-      policy: pull-push
-    - key: ${CI_COMMIT_REF_SLUG}
-      paths:
-        - .venv/
-        - pip-cache/
+        - dist/
       policy: pull-push
 ```
 
@@ -304,8 +318,15 @@ cache:
 ```yaml
 cache:cleanup:
   script:
-    - rm -rf .ccache/*
-    - rm -rf .venv/*
+    - |
+      case $PROJECT_TYPE in
+        cpp)
+          rm -rf .ccache/*
+          ;;
+        python)
+          rm -rf .venv/* .pip-cache/*
+          ;;
+      esac
   cache:
     policy: push
   rules:

@@ -2,20 +2,20 @@
 
 ## Standard Targets
 
-These targets are available in the root Makefile and provide a language-agnostic interface for build operations.
+These targets represent the common interface that all projects must implement, regardless of their programming language.
 
 ### Primary Targets
 
-| Target | Description | Dependencies | Example |
-|--------|-------------|--------------|---------|
-| `all` | Default target, builds and tests | `build test` | `make all` |
-| `build` | Build all language components | `.build-cpp .build-python` | `make build` |
-| `test` | Run all tests | `.test-cpp .test-python` | `make test` |
-| `package` | Create distribution packages | `.package-cpp .package-python` | `make package` |
-| `deploy` | Deploy packages | `.deploy-cpp .deploy-python` | `make deploy` |
-| `clean` | Remove all build artifacts | `.clean-cpp .clean-python` | `make clean` |
+| Target | Description | Example |
+|--------|-------------|---------|
+| `all` | Default target, builds and tests | `make all` |
+| `build` | Build the project | `make build` |
+| `test` | Run project tests | `make test` |
+| `package` | Create distribution package | `make package` |
+| `deploy` | Deploy package | `make deploy` |
+| `clean` | Remove build artifacts | `make clean` |
 
-### Options and Variables
+### Common Variables
 
 ```makefile
 # Build configuration
@@ -27,115 +27,164 @@ PARALLEL_JOBS=4      # Number of parallel jobs
 make build BUILD_TYPE=Debug VERBOSE=1
 ```
 
-## C++ Targets
+## Project Type Examples
 
-### Build Targets
-
-| Target | Description | Usage |
-|--------|-------------|-------|
-| `.build-cpp` | Build C++ components | `make .build-cpp` |
-| `.test-cpp` | Run C++ tests | `make .test-cpp` |
-| `.package-cpp` | Package C++ artifacts | `make .package-cpp` |
-| `.deploy-cpp` | Deploy C++ packages | `make .deploy-cpp` |
-| `.clean-cpp` | Clean C++ artifacts | `make .clean-cpp` |
-| `.cmake-init` | Initialize CMake project | `make .cmake-init` |
-
-### C++ Options
+### C++ Project Implementation
 
 ```makefile
-# CMake configuration
-CMAKE_BUILD_TYPE=Release    # Build type
-CMAKE_GENERATOR="Ninja"     # Build system generator
-CCACHE_DIR=.ccache         # Compiler cache directory
+# Example Makefile for C++ project with Make
 
-# Example usage
-make .build-cpp CMAKE_BUILD_TYPE=Debug
+.PHONY: build test package deploy clean
+
+# Variables
+CXX ?= g++
+CXXFLAGS += -Wall -Wextra
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+
+# Targets
+build:
+    $(CXX) $(CXXFLAGS) src/*.cpp -o $(BUILD_DIR)/program
+
+test:
+    ./$(BUILD_DIR)/program --test
+
+package:
+    tar -czf $(DIST_DIR)/program.tar.gz $(BUILD_DIR)/program
+
+deploy:
+    # Deploy implementation
+
+clean:
+    rm -rf $(BUILD_DIR)/* $(DIST_DIR)/*
 ```
 
-## Python Targets
-
-### Build Targets
-
-| Target | Description | Usage |
-|--------|-------------|-------|
-| `.build-python` | Build Python components | `make .build-python` |
-| `.test-python` | Run Python tests | `make .test-python` |
-| `.package-python` | Package Python artifacts | `make .package-python` |
-| `.deploy-python` | Deploy Python packages | `make .deploy-python` |
-| `.clean-python` | Clean Python artifacts | `make .clean-python` |
-| `.venv-init` | Initialize virtual environment | `make .venv-init` |
-| `.pip-install` | Install Python dependencies | `make .pip-install` |
-
-### Python Options
+### CMake Project Implementation
 
 ```makefile
-# Python configuration
-VIRTUAL_ENV=.venv          # Virtual environment path
-PYTHONPATH=$(PWD)         # Python path
-PYTEST_ARGS="-v"          # Pytest arguments
+# Example Makefile for C++ project with CMake
 
-# Example usage
-make .test-python PYTEST_ARGS="-v --cov"
+.PHONY: build test package deploy clean
+
+# Variables
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+BUILD_TYPE ?= Release
+
+# Targets
+build:
+    mkdir -p $(BUILD_DIR)
+    cd $(BUILD_DIR) && cmake -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) ..
+    cmake --build $(BUILD_DIR)
+
+test:
+    cd $(BUILD_DIR) && ctest --output-on-failure
+
+package:
+    cd $(BUILD_DIR) && cpack
+
+deploy:
+    # Deploy implementation
+
+clean:
+    rm -rf $(BUILD_DIR)/* $(DIST_DIR)/*
 ```
 
-## Docker Targets
-
-### Build Targets
-
-| Target | Description | Usage |
-|--------|-------------|-------|
-| `.docker-cpp-build` | Build C++ Docker image | `make .docker-cpp-build` |
-| `.docker-python-build` | Build Python Docker image | `make .docker-python-build` |
-
-### Docker Options
+### Python Project Implementation (setup.py)
 
 ```makefile
-# Docker configuration
-DOCKER_REGISTRY=your-registry.com   # Registry URL
-DOCKER_TAG=latest                   # Image tag
+# Example Makefile for Python 3.9 project
 
-# Example usage
-make .docker-cpp-build DOCKER_TAG=1.0.0
+.PHONY: build test package deploy clean
+
+# Variables
+VENV ?= .venv
+PYTHON ?= python3.9
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+
+# Targets
+build:
+    $(PYTHON) -m venv $(VENV)
+    . $(VENV)/bin/activate && pip install -e .
+
+test:
+    . $(VENV)/bin/activate && pytest tests/
+
+package:
+    . $(VENV)/bin/activate && python setup.py sdist bdist_wheel
+
+deploy:
+    # Deploy implementation
+
+clean:
+    rm -rf $(BUILD_DIR)/* $(DIST_DIR)/* *.egg-info
 ```
 
-## Advanced Usage
+### Python Project Implementation (pyproject.toml)
 
-### Parallel Execution
+```makefile
+# Example Makefile for Python 3.11+ project
 
-```bash
-# Build all targets in parallel
-make -j4 build
+.PHONY: build test package deploy clean
 
-# Run specific language builds in parallel
-make -j2 .build-cpp .build-python
+# Variables
+VENV ?= .venv
+PYTHON ?= python3.11
+BUILD_DIR ?= build
+DIST_DIR ?= dist
+
+# Targets
+build:
+    $(PYTHON) -m venv $(VENV)
+    . $(VENV)/bin/activate && pip install -e ".[dev]"
+
+test:
+    . $(VENV)/bin/activate && nox
+
+package:
+    . $(VENV)/bin/activate && python -m build
+
+deploy:
+    # Deploy implementation
+
+clean:
+    rm -rf $(BUILD_DIR)/* $(DIST_DIR)/* *.egg-info
 ```
 
-### Conditional Execution
-
-```bash
-# Build only if source files changed
-make -B build
-
-# Build specific target if dependencies changed
-make --question .build-cpp || make .build-cpp
-```
-
-### Target Dependencies
+## Target Dependencies
 
 ```mermaid
 flowchart TD
     All[all] --> Build[build]
     All --> Test[test]
     
-    Build --> BuildCPP[.build-cpp]
-    Build --> BuildPy[.build-python]
+    Package[package] --> Build
+    Deploy[deploy] --> Package
     
-    Test --> TestCPP[.test-cpp]
-    Test --> TestPy[.test-python]
-    
-    BuildCPP --> CMake[.cmake-init]
-    BuildPy --> Venv[.venv-init]
-    BuildPy --> Pip[.pip-install]
+    subgraph Implementation["Project Implementation"]
+        Build --> Custom["Project-Specific Build Steps"]
+        Test --> Custom
+    end
+```
+
+## Options and Arguments
+
+### Build Options
+
+```makefile
+# Common build options
+BUILD_TYPE=Release    # Build type (Release/Debug)
+VERBOSE=1            # Verbose output
+PARALLEL_JOBS=4      # Parallel jobs
+
+# C++ specific
+CXXFLAGS="-Wall"     # Compiler flags
+CMAKE_ARGS=""        # CMake arguments
+
+# Python specific
+PYTEST_ARGS=""       # pytest arguments
+NOX_SESSION=""       # nox session name
 ```
 
 ## Error Handling
@@ -144,7 +193,7 @@ flowchart TD
 
 | Error | Possible Cause | Solution |
 |-------|---------------|----------|
-| `make: *** No rule to make target` | Missing include or target | Check makefile includes |
+| `make: *** No rule to make target` | Missing target implementation | Add target to Makefile |
 | `command not found` | Missing tool or wrong PATH | Install required tool |
 | `permission denied` | File permissions issue | Check file permissions |
 
@@ -163,15 +212,17 @@ make --print-data-base
 
 ## Best Practices
 
-### Target Naming
-- Use standard targets for common operations
-- Prefix internal targets with dot (.)
-- Use descriptive names for custom targets
+### Target Implementation
+- Implement all standard targets
+- Use consistent variable names
+- Document target behavior
+- Handle errors gracefully
 
 ### Variable Usage
-- Provide defaults for all variables
+- Provide sensible defaults
 - Use ?= for overridable variables
 - Document all variables
+- Keep project-specific variables local
 
 ### Dependencies
 - Declare all dependencies explicitly
@@ -180,9 +231,9 @@ make --print-data-base
 
 ## Examples
 
-### Basic Build
+### Basic Usage
 ```bash
-# Full build
+# Full build cycle
 make clean build test
 
 # Debug build
@@ -192,27 +243,22 @@ make build BUILD_TYPE=Debug
 make package BUILD_TYPE=Release
 ```
 
-### Language-Specific
+### Testing Options
 ```bash
-# C++ development
-make .cmake-init
-make .build-cpp
-make .test-cpp
+# C++ project with specific test filter
+make test TEST_FILTER="MyTest*"
 
-# Python development
-make .venv-init
-make .pip-install
-make .test-python
+# Python project with pytest args
+make test PYTEST_ARGS="-k test_feature"
+
+# Python project with specific nox session
+make test NOX_SESSION="tests"
 ```
 
-### Docker Integration
+### CI/CD Usage
 ```bash
-# Build all images
-make .docker-cpp-build
-make .docker-python-build
-
-# Run in container
-make .build-cpp DOCKER=1
+# Typical CI pipeline sequence
+make build && make test && make package
 ```
 
 ## See Also

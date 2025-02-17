@@ -1,192 +1,243 @@
 # Installation Guide
 
+## Table of Contents
+- [Overview](#overview)
+- [Developer Guide](#developer-guide)
+  - [Prerequisites](#developer-prerequisites)
+  - [Repository Setup](#repository-setup)
+  - [Building and Testing](#building-and-testing)
+  - [CI/CD Configuration](#cicd-configuration)
+  - [Common Developer Tasks](#common-developer-tasks)
+- [Build Engineer Guide](#build-engineer-guide)
+  - [Prerequisites](#build-engineer-prerequisites)
+  - [Docker Environment Setup](#docker-environment-setup)
+  - [GitLab Runner Configuration](#gitlab-runner-configuration)
+  - [Pipeline Template Management](#pipeline-template-management)
+- [Troubleshooting](#troubleshooting)
+- [Next Steps](#next-steps)
+
 ## Overview
 
-This guide walks through the process of setting up the build system and CI/CD pipeline for your project. Before starting, ensure you have met all [system requirements](requirements.md).
+This guide is split into two main sections:
+- **Developer Guide**: For day-to-day development operations
+- **Build Engineer Guide**: For infrastructure and tooling updates
 
-## Table of Contents
-1. [Repository Setup](#repository-setup)
-2. [Build System Installation](#build-system-installation)
-3. [Docker Environment Setup](#docker-environment-setup)
-4. [GitLab CI/CD Configuration](#gitlab-cicd-configuration)
-5. [Verification](#verification)
+Before starting, ensure you have met all [system requirements](requirements.md).
 
-## Repository Setup
+## Developer Guide
 
-1. Clone the template repository:
+### Developer Prerequisites
+- Git 2.x or higher
+- Make 4.x or higher
+- Docker (for local testing)
+- Language-specific tools:
+  - C++: GCC/Clang, CMake (if using CMake)
+  - Python: Python 3.9+ or 3.11+ (for new projects)
+
+### Repository Setup
+
+1. Clone your project repository:
 ```bash
-git clone https://gitlab.com/your-org/build-template.git your-project
+git clone https://gitlab.com/your-org/your-project.git
 cd your-project
 ```
 
-2. Copy the build system files:
-```bash
-cp -r template/make/ .
-cp template/Makefile .
+2. Create a basic Makefile (if not exists):
+```makefile
+# Example Makefile
+.PHONY: build test package deploy
+
+build:
+    # Your build commands here
+
+test:
+    # Your test commands here
+
+package:
+    # Your packaging commands here
+
+deploy:
+    # Your deployment commands here
 ```
 
-3. Initialize the Docker configurations:
-```bash
-cp -r template/docker/ .
+3. Configure project type in .gitlab-ci.yml:
+```yaml
+variables:
+  PROJECT_TYPE: cpp  # or 'python' for Python projects
 ```
 
-4. Set up GitLab CI/CD:
+### Building and Testing
+
 ```bash
-mkdir -p .gitlab/ci
-cp -r template/.gitlab/ci/* .gitlab/ci/
-cp template/.gitlab-ci.yml .
-```
-
-## Build System Installation
-
-1. Configure the Makefile environment:
-```bash
-# Create build and dist directories
-mkdir -p build dist
-
-# Set up environment variables
-export BUILD_DIR="$(pwd)/build"
-export DIST_DIR="$(pwd)/dist"
-```
-
-2. Customize make/common.mk:
-```bash
-# Edit common variables
-vim make/common.mk
-
-# Example customization:
-PROJECT_NAME="your-project-name"
-DOCKER_REGISTRY="your-registry.com"
-```
-
-3. Configure language-specific makefiles:
-   - Edit `make/cpp.mk` for C++ settings
-   - Edit `make/python.mk` for Python settings
-
-## Docker Environment Setup
-
-1. Build the base image:
-```bash
-docker build -t your-registry.com/base:latest -f docker/base/Dockerfile .
-```
-
-2. Build language-specific images:
-```bash
-# C++ environment
-docker build -t your-registry.com/cpp:latest -f docker/cpp/Dockerfile .
-
-# Python environment
-docker build -t your-registry.com/python:latest -f docker/python/Dockerfile .
-```
-
-3. Push images to registry:
-```bash
-docker push your-registry.com/base:latest
-docker push your-registry.com/cpp:latest
-docker push your-registry.com/python:latest
-```
-
-## GitLab CI/CD Configuration
-
-1. Configure GitLab variables:
-   - Navigate to Settings > CI/CD > Variables
-   - Add required variables:
-     ```
-     CI_REGISTRY="your-registry.com"
-     CI_REGISTRY_USER="your-username"
-     CI_REGISTRY_PASSWORD="your-password"
-     ```
-
-2. Set up GitLab Runners:
-   - Go to Settings > CI/CD > Runners
-   - Register a new runner with Docker executor
-   - Apply runner tags as needed
-
-3. Customize CI/CD templates:
-   - Edit `.gitlab/ci/base.gitlab-ci.yml` for common settings
-   - Modify language-specific templates as needed
-
-## Verification
-
-1. Verify build system:
-```bash
-# Test Make targets
+# Build the project
 make build
+
+# Run tests
 make test
+
+# Create package
 make package
+
+# Deploy (if configured)
 make deploy
 ```
 
-2. Verify Docker environments:
+### CI/CD Configuration
+
+1. Basic .gitlab-ci.yml setup:
+```yaml
+include:
+  - project: 'your-org/pipeline-templates'
+    file: '/templates/base.yml'
+
+variables:
+  PROJECT_TYPE: cpp  # or 'python'
+
+# Add any project-specific configurations below
+```
+
+2. Available GitLab runners:
+- `base`: Common tools and utilities
+- `cpp`: C++ development environment
+- `python`: Python development environment
+
+### Common Developer Tasks
+
+1. Making code changes:
 ```bash
-# Test C++ environment
+# Build and test locally
+make build
+make test
+
+# Commit and push
+git add .
+git commit -m "Your changes"
+git push origin main
+```
+
+2. Running specific tests:
+```bash
+# C++ projects
+make test TEST_FILTER="TestSuite.TestCase"
+
+# Python projects
+make test PYTEST_ARGS="-k test_function"
+```
+
+## Build Engineer Guide
+
+### Build Engineer Prerequisites
+- All developer prerequisites
+- Access to GitLab admin interface
+- Docker registry access
+- AWS access (for runner configuration)
+
+### Docker Environment Setup
+
+1. Build base image:
+```bash
+cd docker/base
+docker build -t your-registry.com/base:latest .
+docker push your-registry.com/base:latest
+```
+
+2. Build language images:
+```bash
+# C++ environment
+cd ../cpp
+docker build -t your-registry.com/cpp:latest .
+docker push your-registry.com/cpp:latest
+
+# Python environment
+cd ../python
+docker build -t your-registry.com/python:latest .
+docker push your-registry.com/python:latest
+```
+
+3. Test environments locally:
+```bash
+# Verify C++ environment
 docker run --rm your-registry.com/cpp:latest make --version
 
-# Test Python environment
+# Verify Python environment
 docker run --rm your-registry.com/python:latest python --version
 ```
 
-3. Validate CI/CD pipeline:
-```bash
-# Commit and push changes
-git add .
-git commit -m "Initial setup"
-git push origin main
+### GitLab Runner Configuration
 
-# Check pipeline status in GitLab UI
+1. Register runners:
+```bash
+gitlab-runner register \
+  --url "https://gitlab.com/" \
+  --registration-token "YOUR_TOKEN" \
+  --executor "docker" \
+  --docker-image your-registry.com/base:latest \
+  --tag-list "base"
 ```
 
-## Contributing
+2. Configure runner tags:
+- `base`: Base image with common tools
+- `cpp`: C++ development environment
+- `python`: Python development environment
 
-### Adding New Language Support
+3. AWS runner setup:
+- Configure instance types
+- Set up auto-scaling
+- Configure networking and security
 
-1. Create language-specific makefile:
+### Pipeline Template Management
+
+1. Update base templates:
 ```bash
-cp template/make/language.mk.template make/newlang.mk
+# Edit core pipeline templates
+vim .gitlab/ci/base.yml
+
+# Update language-specific templates
+vim .gitlab/ci/cpp.yml
+vim .gitlab/ci/python.yml
 ```
 
-2. Add Docker configuration:
-```bash
-cp -r template/docker/language/ docker/newlang/
-```
-
-3. Create CI/CD template:
-```bash
-cp template/.gitlab/ci/language.yml .gitlab/ci/newlang.yml
-```
-
-4. Update main configuration files:
-   - Add language include to Makefile
-   - Update .gitlab-ci.yml
-   - Document new language support
+2. Test template changes:
+- Create test projects
+- Verify pipeline execution
+- Monitor performance
 
 ## Troubleshooting
 
-Common installation issues:
+### Developer Issues
+1. **Build Problems**
+   - Verify Makefile targets
+   - Check language-specific tools
+   - Review [Build Problems](../troubleshooting/build-problems.md)
 
-1. **Docker Build Fails**
-   - Verify Docker daemon is running
-   - Check network connectivity
-   - Ensure sufficient disk space
-
-2. **Make Errors**
-   - Verify all required tools are installed
-   - Check environment variables
-   - Validate file permissions
-
-3. **CI/CD Issues**
-   - Confirm runner registration
-   - Verify registry credentials
+2. **Pipeline Issues**
+   - Confirm PROJECT_TYPE setting
    - Check pipeline logs
+   - Review [Pipeline Debugging](../troubleshooting/pipeline-debugging.md)
 
-For more detailed troubleshooting:
+### Build Engineer Issues
+1. **Docker Issues**
+   - Verify registry access
+   - Check image builds
+   - Monitor resource usage
+
+2. **Runner Problems**
+   - Check runner registration
+   - Verify AWS configuration
+   - Monitor runner performance
+
+For detailed troubleshooting:
 - See [Common Issues](../troubleshooting/common-issues.md)
-- Check [Build Problems](../troubleshooting/build-problems.md)
-- Review [Pipeline Debugging](../troubleshooting/pipeline-debugging.md)
+- Contact support team
 
 ## Next Steps
 
-After successful installation:
+### For Developers
 1. Review the [Quick Start Guide](quickstart.md)
 2. Explore [Build System Documentation](../build-system/overview.md)
-3. Learn about [CI/CD Features](../ci-cd/pipeline-overview.md)
+3. Set up your first project
+
+### For Build Engineers
+1. Review [Docker Environment](../docker/base-image.md#build-engineer-setup)
+2. Explore [CI/CD Features](../ci-cd/pipeline-overview.md)
+3. Monitor system performance

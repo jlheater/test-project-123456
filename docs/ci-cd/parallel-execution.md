@@ -2,20 +2,25 @@
 
 ## Overview
 
-Parallel job execution in GitLab CI/CD allows simultaneous processing of independent tasks, significantly reducing pipeline execution time. This guide covers strategies for implementing and optimizing parallel execution.
+Parallel job execution in GitLab CI/CD allows simultaneous processing of independent tasks, significantly reducing pipeline execution time. This guide covers strategies for implementing and optimizing parallel execution with project-specific runners.
 
 ```mermaid
 flowchart TD
     Trigger[Pipeline Trigger] --> Split[Job Split]
     Split --> Jobs["Parallel Jobs"]
     
-    subgraph Jobs["Parallel Execution"]
-        Job1["C++ Debug"]
-        Job2["C++ Release"]
-        Job3["Python 3.8"]
-        Job4["Python 3.9"]
+    subgraph Config["Project Configuration"]
+        Type["PROJECT_TYPE"]
     end
     
+    subgraph Jobs["Parallel Execution"]
+        Debug["Debug Build"]
+        Release["Release Build"]
+        Unit["Unit Tests"]
+        Integration["Integration Tests"]
+    end
+    
+    Type --> Jobs
     Jobs --> Merge[Results Collection]
     Merge --> Next[Next Stage]
 ```
@@ -25,24 +30,31 @@ flowchart TD
 ### Matrix Jobs
 
 ```yaml
-cpp:build:
+build:
+  variables:
+    PROJECT_TYPE: cpp  # or 'python'
   parallel:
     matrix:
       - BUILD_TYPE: [Debug, Release]
-      - COMPILER: [gcc, clang]
   script:
-    - make .build-cpp BUILD_TYPE=$BUILD_TYPE CXX=$COMPILER
+    - make build BUILD_TYPE=$BUILD_TYPE
 ```
 
 ### Multiple Job Definitions
 ```yaml
-cpp:build:debug:
+build:debug:
+  variables:
+    PROJECT_TYPE: cpp
+    BUILD_TYPE: Debug
   script:
-    - make .build-cpp BUILD_TYPE=Debug
+    - make build
 
-cpp:build:release:
+build:release:
+  variables:
+    PROJECT_TYPE: cpp
+    BUILD_TYPE: Release
   script:
-    - make .build-cpp BUILD_TYPE=Release
+    - make build
 ```
 
 ## Resource Management
@@ -52,7 +64,7 @@ cpp:build:release:
 default:
   interruptible: true
   tags:
-    - docker
+    - $PROJECT_TYPE
 
 variables:
   GIT_STRATEGY: fetch
@@ -74,10 +86,8 @@ variables:
 flowchart LR
     subgraph Matrix["Build Matrix"]
         direction TB
-        Debug["Debug Build"] --> GCC1["GCC"]
-        Debug --> Clang1["Clang"]
-        Release["Release Build"] --> GCC2["GCC"]
-        Release --> Clang2["Clang"]
+        Debug["Debug Build"]
+        Release["Release Build"]
     end
     
     subgraph Tests["Test Matrix"]
@@ -93,9 +103,9 @@ flowchart LR
 ### Dependencies Management
 ```yaml
 # Job dependencies
-cpp:test:
+test:
   needs:
-    - job: cpp:build
+    - job: build
       artifacts: true
   parallel:
     matrix:
@@ -104,38 +114,43 @@ cpp:test:
 
 ## Common Patterns
 
-### Language-Specific Parallel Jobs
+### Project-Type Specific Parallel Jobs
 
-#### C++ Jobs
+#### C++ Configuration
 ```yaml
-.cpp_matrix:
+variables:
+  PROJECT_TYPE: cpp
+
+.build_matrix:
   parallel:
     matrix:
       - BUILD_TYPE: [Debug, Release]
-      - COMPILER: [gcc, clang]
       - ARCH: [x86_64, arm64]
     exclude:
       - BUILD_TYPE: Debug
         ARCH: arm64
 
-cpp:build:
-  extends: .cpp_matrix
+build:
+  extends: .build_matrix
   script:
-    - make .build-cpp
+    - make build
 ```
 
-#### Python Jobs
+#### Python Configuration
 ```yaml
-.python_matrix:
+variables:
+  PROJECT_TYPE: python
+
+.test_matrix:
   parallel:
     matrix:
-      - PYTHON_VERSION: [3.8, 3.9]
+      - PYTHON_VERSION: [3.9, 3.11]
       - TEST_TYPE: [unit, integration]
 
-python:test:
-  extends: .python_matrix
+test:
+  extends: .test_matrix
   script:
-    - make .test-python
+    - make test
 ```
 
 ## Resource Optimization
@@ -147,10 +162,11 @@ python:test:
     key:
       files:
         - Makefile
-        - cmake/
+        - CMakeLists.txt  # For C++ projects
+        - pyproject.toml  # For Python projects
     paths:
       - build/
-      - .ccache/
+      - dist/
     policy: pull-push
 ```
 
@@ -160,7 +176,8 @@ python:test:
   artifacts:
     expire_in: 1 week
     paths:
-      - build/$BUILD_TYPE/
+      - build/
+      - dist/
     when: on_success
 ```
 
@@ -170,9 +187,9 @@ python:test:
 ```yaml
 # Optimize parallel execution
 variables:
-  MAKEFLAGS: "-j4"
-  CARGO_BUILD_JOBS: "4"
-  CMAKE_BUILD_PARALLEL_LEVEL: "4"
+  PARALLEL_JOBS: 4
+  CMAKE_BUILD_PARALLEL_LEVEL: 4  # For C++ projects
+  PYTEST_ADDOPTS: "-n auto"      # For Python projects
 ```
 
 ### Resource Allocation
@@ -191,15 +208,13 @@ flowchart TD
     Build["Build Stage"] --> Test["Test Stage"]
     
     subgraph Build
-        CPP1["C++ Debug"]
-        CPP2["C++ Release"]
-        PY1["Python 3.8"]
-        PY2["Python 3.9"]
+        Debug["Debug Build"]
+        Release["Release Build"]
     end
     
     subgraph Test
-        Test1["Unit Tests"]
-        Test2["Integration"]
+        Unit["Unit Tests"]
+        Integration["Integration"]
     end
 ```
 
@@ -218,22 +233,22 @@ workflow:
 ## Best Practices
 
 ### Job Design
-- Independent execution paths
-- Minimal shared resources
-- Clear dependencies
-- Efficient artifact handling
+- Use PROJECT_TYPE for runner selection
+- Create independent execution paths
+- Minimize shared resources
+- Handle artifacts efficiently
 
 ### Resource Usage
-- Appropriate parallelization
-- Cache optimization
-- Resource group allocation
-- Runner distribution
+- Set appropriate parallelization
+- Optimize caching
+- Allocate resource groups
+- Distribute runners properly
 
 ### Pipeline Efficiency
-- Strategic job splitting
-- Dependency management
-- Result aggregation
-- Clear stage progression
+- Split jobs strategically
+- Manage dependencies
+- Aggregate results
+- Progress through stages clearly
 
 ## Monitoring
 
@@ -262,10 +277,10 @@ workflow:
 ### Common Issues
 | Issue | Cause | Solution |
 |-------|-------|----------|
+| Runner selection | Wrong PROJECT_TYPE | Verify PROJECT_TYPE |
 | Resource contention | Over-parallelization | Adjust parallel jobs |
 | Cache conflicts | Shared cache keys | Use distinct keys |
 | Runner overload | Too many jobs | Configure job limits |
-| Memory exhaustion | Large parallel jobs | Adjust resource limits |
 
 ### Debug Configuration
 ```yaml
@@ -285,11 +300,11 @@ test:matrix:
   parallel:
     matrix:
       - BUILD_TYPE: [Debug, Release]
-      - COMPILER: [gcc, clang]
-      - SANITIZER: [address, thread, undefined]
+      - TEST_SUITE: [unit, integration]
+      - COVERAGE: [true, false]
     exclude:
-      - COMPILER: gcc
-        SANITIZER: thread
+      - BUILD_TYPE: Release
+        COVERAGE: true
 ```
 
 ### Resource Groups
@@ -298,7 +313,7 @@ build:parallel:
   parallel: 4
   resource_group: ${CI_JOB_NAME}
   script:
-    - make -j${PARALLEL_JOBS}
+    - make build -j${PARALLEL_JOBS}
 ```
 
 ## See Also

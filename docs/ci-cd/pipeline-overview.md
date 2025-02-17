@@ -2,7 +2,7 @@
 
 ## Architecture
 
-The CI/CD pipeline provides a modular, template-based approach to building, testing, and deploying multi-language projects. It leverages GitLab CI/CD with Docker executors for consistent environments.
+The CI/CD pipeline provides a template-based approach to building, testing, and deploying projects. It uses PROJECT_TYPE to determine the appropriate runner and environment, leveraging GitLab CI/CD with Docker executors for consistent environments.
 
 ```mermaid
 flowchart TD
@@ -12,22 +12,20 @@ flowchart TD
     Test --> Package[Package Stage]
     Package --> Deploy[Deploy Stage]
     
-    subgraph Templates["Pipeline Templates"]
-        Base[".gitlab-ci.yml"]
-        Common["base.gitlab-ci.yml"]
-        CPP["cpp.gitlab-ci.yml"]
-        Python["python.gitlab-ci.yml"]
+    subgraph Project["Project Configuration"]
+        Config[".gitlab-ci.yml"]
+        Type["PROJECT_TYPE"]
+        Base["base.gitlab-ci.yml"]
     end
     
-    subgraph Parallel["Parallel Jobs"]
-        CPPBuild["C++ Build"]
-        PyBuild["Python Build"]
-        CPPTest["C++ Test"]
-        PyTest["Python Test"]
+    subgraph Runners["Runner Selection"]
+        CPP["cpp runner"]
+        Python["python runner"]
     end
     
-    Build --> CPPBuild & PyBuild
-    Test --> CPPTest & PyTest
+    Type --> CPP & Python
+    Config --> Base
+    Base --> Build
 ```
 
 ## Pipeline Structure
@@ -36,51 +34,50 @@ flowchart TD
 ```
 .gitlab/
 ├── ci/
-│   ├── base.gitlab-ci.yml     # Common configuration
-│   ├── cpp.gitlab-ci.yml      # C++ specific jobs
-│   └── python.gitlab-ci.yml   # Python specific jobs
-└── .gitlab-ci.yml            # Main pipeline definition
+│   ├── base.gitlab-ci.yml     # Common pipeline configuration
+│   ├── cpp.gitlab-ci.yml      # C++ runner configuration
+│   └── python.gitlab-ci.yml   # Python runner configuration
+└── .gitlab-ci.yml            # Project-specific configuration
 ```
 
-### Stage Definitions
+### Stage Descriptions
+
 1. **Pre Stage** (.pre)
-   - Docker image builds
-   - Environment preparation
-   - Cache warming
+   - Purpose: Prepare build environment
+   - Actions: Docker image pulls, cache setup
+   - Output: Ready build environment
 
 2. **Build Stage**
-   - Language-specific builds
-   - Parallel execution
-   - Artifact generation
+   - Purpose: Build project artifacts
+   - Actions: Execute `make build`
+   - Output: Build artifacts
 
 3. **Test Stage**
-   - Unit tests
-   - Integration tests
-   - Coverage reporting
+   - Purpose: Validate project
+   - Actions: Execute `make test`
+   - Output: Test results and coverage
 
 4. **Package Stage**
-   - Distribution packaging
-   - Version tagging
-   - Artifact publishing
+   - Purpose: Create distribution packages
+   - Actions: Execute `make package`
+   - Output: Distribution artifacts
 
 5. **Deploy Stage**
-   - Environment deployments
-   - Release management
-   - Documentation updates
+   - Purpose: Deploy project
+   - Actions: Execute `make deploy`
+   - Output: Deployment status
 
 ## Pipeline Configuration
 
-### Main Pipeline
+### Project Configuration
 ```yaml
 # .gitlab-ci.yml
 include:
   - local: .gitlab/ci/base.gitlab-ci.yml
-  - local: .gitlab/ci/cpp.gitlab-ci.yml
-  - local: .gitlab/ci/python.gitlab-ci.yml
 
 variables:
+  PROJECT_TYPE: cpp  # or 'python'
   GIT_STRATEGY: fetch
-  GIT_CLEAN_FLAGS: -ffdx
 ```
 
 ### Base Configuration
@@ -96,19 +93,20 @@ stages:
   - deploy
 
 .base_job:
-  image: $CI_REGISTRY_IMAGE/base:latest
+  image: $CI_REGISTRY_IMAGE/$PROJECT_TYPE:latest
   cache:
     paths:
       - build/
-      - .ccache/
-      - .venv/
+      - dist/
 ```
 
 ## Job Templates
 
-### Build Templates
+### Build Jobs
 ```yaml
-.build_template:
+# Description: Builds project using appropriate runner
+build:
+  extends: .base_job
   stage: build
   script:
     - make build
@@ -118,9 +116,11 @@ stages:
       - dist/
 ```
 
-### Test Templates
+### Test Jobs
 ```yaml
-.test_template:
+# Description: Runs project tests with coverage
+test:
+  extends: .base_job
   stage: test
   script:
     - make test
@@ -132,21 +132,17 @@ stages:
         path: coverage.xml
 ```
 
-## Parallel Execution
-
-### Language-Specific Jobs
+### Package Jobs
 ```yaml
-cpp:build:
-  extends: .build_template
-  parallel:
-    matrix:
-      - BUILD_TYPE: [Debug, Release]
-
-python:build:
-  extends: .build_template
-  parallel:
-    matrix:
-      - PYTHON_VERSION: [3.8, 3.9]
+# Description: Creates distribution packages
+package:
+  extends: .base_job
+  stage: package
+  script:
+    - make package
+  artifacts:
+    paths:
+      - dist/
 ```
 
 ## Resource Management
@@ -157,12 +153,11 @@ cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - build/
-    - .ccache/
-    - .venv/
+    - dist/
   policy: pull-push
 ```
 
-### Artifacts
+### Build Artifacts
 ```yaml
 artifacts:
   paths:
@@ -175,9 +170,33 @@ artifacts:
     junit: test-results.xml
 ```
 
+## Runner Configuration
+
+### C++ Runner
+```yaml
+# cpp.gitlab-ci.yml
+.cpp_runner:
+  tags:
+    - cpp
+  variables:
+    BUILD_TYPE: Release
+    CCACHE_DIR: .ccache
+```
+
+### Python Runner
+```yaml
+# python.gitlab-ci.yml
+.python_runner:
+  tags:
+    - python
+  variables:
+    VIRTUAL_ENV: .venv
+    PYTHONPATH: src
+```
+
 ## Environment Management
 
-### Environment Variables
+### Common Variables
 ```yaml
 variables:
   BUILD_TYPE: Release
@@ -185,7 +204,7 @@ variables:
   DOCKER_TAG: $CI_COMMIT_SHA
 ```
 
-### Deployment Configuration
+### Deployment Settings
 ```yaml
 .deploy_template:
   stage: deploy
@@ -200,36 +219,36 @@ variables:
 ## Best Practices
 
 ### Pipeline Design
-- Use modular templates
-- Enable parallel execution
-- Implement caching
-- Handle artifacts efficiently
+- Specify PROJECT_TYPE explicitly
+- Use provided runners
+- Implement efficient caching
+- Handle artifacts properly
 
 ### Job Configuration
-- Clear stage organization
-- Consistent naming
-- Proper dependencies
-- Resource optimization
+- Follow stage progression
+- Use appropriate runners
+- Manage resources efficiently
+- Handle errors gracefully
 
 ### Environment Management
-- Secure variable handling
-- Environment isolation 
-- Deployment controls
-- Version management
+- Secure sensitive variables
+- Isolate environments
+- Control deployments
+- Track versions
 
 ## Performance Optimization
 
-### Cache Strategies
-- Layer caching for Docker
-- Compiler cache (ccache)
+### Caching Strategy
+- Runner-specific caching
+- Build artifact caching
 - Dependency caching
-- Artifact management
+- Layer optimization
 
 ### Job Execution
-- Parallel processing
+- Appropriate runner selection
 - Resource allocation
-- Stage dependencies
-- Execution order
+- Dependency management
+- Error handling
 
 ## Security Considerations
 
@@ -237,44 +256,44 @@ variables:
 - Protected variables
 - Secure credentials
 - Environment restrictions
-- Deploy permissions
+- Runner access control
 
-### Image Security
+### Runner Security
 - Image scanning
 - Version control
-- Security updates
-- Base image maintenance
+- Regular updates
+- Access limitations
 
-## Monitoring and Feedback
+## Monitoring and Reporting
 
 ### Pipeline Metrics
 - Build duration
 - Test coverage
-- Success rate
+- Success rates
 - Resource usage
 
-### Reporting
+### Build Reports
 - Test results
-- Coverage reports
+- Coverage data
 - Artifact tracking
 - Deployment status
 
 ## Common Issues
 
 ### Pipeline Problems
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Cache miss | Invalid key | Clear cache |
-| Job timeout | Resource limits | Adjust timeouts |
-| Build fail | Dependencies | Check requirements |
-| Deploy error | Permissions | Verify access |
+| Issue | Solution |
+|-------|----------|
+| Wrong runner | Check PROJECT_TYPE |
+| Cache miss | Verify cache key |
+| Build fail | Check make targets |
+| Runner offline | Contact support |
 
-### Debug Tools
+### Debugging
 ```bash
 # Pipeline validation
 gitlab-ci-lint
 
-# Job debug
+# Local job testing
 gitlab-runner exec docker job-name
 ```
 

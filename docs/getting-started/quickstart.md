@@ -2,27 +2,47 @@
 
 ## Overview
 
-This guide provides a quick introduction to using the build system and CI/CD pipeline with practical examples. For detailed setup instructions, see the [Installation Guide](installation.md).
+This guide provides quick-start instructions for both developers and build engineers. For detailed setup, see the [Installation Guide](installation.md).
 
-## Quick Setup
+## Table of Contents
+- [Developer Guide](#developer-guide)
+  - [Project Setup](#project-setup)
+  - [Common Tasks](#common-tasks)
+  - [CI/CD Usage](#cicd-usage)
+- [Build Engineer Guide](#build-engineer-guide)
+  - [Docker Development](#docker-development)
+  - [Runner Management](#runner-management)
+  - [Advanced Configuration](#advanced-configuration)
 
-### 1. Clone and Configure
+## Developer Guide
+
+### Project Setup
+
+1. **Clone and Configure**
 ```bash
 # Clone your project
 git clone https://gitlab.com/your-org/your-project.git
 cd your-project
 
-# Set up environment
-export BUILD_DIR="$(pwd)/build"
-export DIST_DIR="$(pwd)/dist"
+# Verify Makefile exists
+ls Makefile
 ```
 
-### 2. Basic Build Commands
+2. **Configure Project Type**
+```yaml
+# .gitlab-ci.yml
+variables:
+  PROJECT_TYPE: cpp  # or 'python' for Python projects
+```
+
+### Common Tasks
+
+1. **Basic Build Commands**
 ```bash
-# Build everything
+# Build project
 make build
 
-# Run all tests
+# Run tests
 make test
 
 # Create packages
@@ -32,190 +52,173 @@ make package
 make deploy
 ```
 
-## Common Use Cases
+2. **Project Structure Examples**
 
-### C++ Project
-
-1. **Build a C++ Project**
-```bash
-# Build C++ components
-make .build-cpp
-
-# Run C++ tests
-make .test-cpp
-
-# Package C++ artifacts
-make .package-cpp
-```
-
-2. **Example C++ Project Structure**
+C++ Project:
 ```
 my-cpp-project/
-├── CMakeLists.txt
+├── Makefile           # Generic targets (build, test, etc.)
+├── CMakeLists.txt    # If using CMake
 ├── src/
 │   └── main.cpp
 └── tests/
     └── test_main.cpp
 ```
 
-### Python Project
-
-1. **Build a Python Project**
-```bash
-# Set up Python environment
-make .venv-init
-
-# Install dependencies
-make .pip-install
-
-# Run Python tests
-make .test-python
-
-# Create Python package
-make .package-python
-```
-
-2. **Example Python Project Structure**
+Python Project:
 ```
 my-python-project/
-├── setup.py
-├── requirements.txt
+├── Makefile          # Generic targets (build, test, etc.)
+├── pyproject.toml    # For Python 3.11+ projects
+├── setup.py         # For Python 3.9 projects
 ├── src/
 │   └── main.py
 └── tests/
     └── test_main.py
 ```
 
-## Docker Development
+### CI/CD Usage
 
-### Using Pre-built Images
+1. **Available Runners**
+```yaml
+# .gitlab-ci.yml example
+variables:
+  PROJECT_TYPE: cpp  # Automatically uses cpp runner
 
-1. **C++ Development**
-```bash
-# Run C++ environment
-docker run -it --rm \
-  -v "$(pwd):/workspace" \
-  your-registry.com/cpp:latest
+# Available runner tags:
+# - base: Common tools
+# - cpp: C++ development environment
+# - python: Python development environment
 ```
 
-2. **Python Development**
+2. **Manual Pipeline Triggers**
 ```bash
-# Run Python environment
-docker run -it --rm \
-  -v "$(pwd):/workspace" \
-  your-registry.com/python:latest
-```
-
-### Quick Docker Commands
-
-```bash
-# Build all images
-docker-compose build
-
-# Run specific service
-docker-compose up cpp
-docker-compose up python
-
-# Clean up
-docker-compose down
-```
-
-## CI/CD Pipeline
-
-### Manual Pipeline Triggers
-
-1. **Trigger full pipeline**
-```bash
+# Trigger via push
 git push origin main
+
+# Or via GitLab UI:
+# CI/CD > Pipelines > Run Pipeline
 ```
 
-2. **Trigger specific jobs**
-```bash
-# Via GitLab UI
-CI/CD > Pipelines > Run Pipeline
-```
-
-### Pipeline Variables
-
-```bash
-# Common overrides
+3. **Common Pipeline Variables**
+```yaml
 variables:
   BUILD_TYPE: Debug
   PARALLEL_JOBS: "4"
 ```
 
-## Common Tasks
-
-### Adding Dependencies
-
-1. **C++ Dependencies**
-   - Add to docker/cpp/Dockerfile
-   ```dockerfile
-   RUN apt-get update && apt-get install -y \
-       your-package-name
-   ```
-
-2. **Python Dependencies**
-   - Add to requirements.txt
-   ```text
-   your-package==1.2.3
-   ```
-
-### Running Tests
-
+4. **Running Tests**
 ```bash
 # All tests
 make test
 
-# Specific language tests
-make .test-cpp
-make .test-python
-
-# With coverage
-make test COVERAGE=1
+# With specific arguments
+make test TEST_FILTER="TestSuite.TestCase"  # C++ projects
+make test PYTEST_ARGS="-k test_function"    # Python projects
 ```
 
-### Debugging
+## Build Engineer Guide
 
-1. **Build Issues**
+### Docker Development
+
+1. **Local Environment Setup**
 ```bash
-# Verbose output
-make build VERBOSE=1
+# Clone Docker configurations
+git clone https://gitlab.com/your-org/docker-environments.git
+cd docker-environments
 
-# Clean build
+# Set up dev environment
+export DOCKER_REGISTRY="your-registry.com"
+```
+
+2. **Building Images Locally**
+```bash
+# Base image
+cd base
+docker build -t $DOCKER_REGISTRY/base:latest .
+
+# Language-specific images
+cd ../cpp
+docker build -t $DOCKER_REGISTRY/cpp:latest .
+
+cd ../python
+docker build -t $DOCKER_REGISTRY/python:latest .
+```
+
+3. **Testing Environments**
+```bash
+# Test C++ environment
+docker run --rm -v "$(pwd):/workspace" \
+  $DOCKER_REGISTRY/cpp:latest make --version
+
+# Test Python environment
+docker run --rm -v "$(pwd):/workspace" \
+  $DOCKER_REGISTRY/python:latest python --version
+```
+
+### Runner Management
+
+1. **Runner Configuration**
+```bash
+# Register a runner with specific tags
+gitlab-runner register \
+  --url "https://gitlab.com/" \
+  --registration-token "TOKEN" \
+  --executor "docker" \
+  --docker-image $DOCKER_REGISTRY/base:latest \
+  --tag-list "base"
+```
+
+2. **AWS Configuration**
+- Configure instance types for runners
+- Set up auto-scaling groups
+- Manage security groups
+
+### Advanced Configuration
+
+1. **Custom Build Arguments**
+```dockerfile
+# docker/cpp/Dockerfile
+ARG CMAKE_VERSION=3.25
+ARG GCC_VERSION=9
+```
+
+2. **Environment Optimizations**
+```bash
+# Build with cache mounting
+docker build \
+  --build-arg BUILDKIT_INLINE_CACHE=1 \
+  --cache-from $DOCKER_REGISTRY/cpp:latest \
+  -t $DOCKER_REGISTRY/cpp:latest .
+```
+
+## Best Practices
+
+### For Developers
+- Use generic make targets (build, test, etc.)
+- Specify PROJECT_TYPE in .gitlab-ci.yml
+- Follow language-specific conventions
+- Keep builds reproducible
+
+### For Build Engineers
+- Maintain minimal base images
+- Optimize layer caching
+- Monitor runner performance
+- Document configuration changes
+
+## Common Issues
+
+1. **Build Problems**
+```bash
+# Clean and rebuild
 make clean
 make build
 ```
 
 2. **Pipeline Issues**
-```bash
-# Check job logs in GitLab UI
-CI/CD > Pipelines > [pipeline] > [job]
-```
-
-## Best Practices
-
-### Code Organization
-- Keep language-specific code separate
-- Use consistent directory structure
-- Follow language conventions
-
-### Build System
-- Use language-specific targets
-- Leverage parallel builds
-- Maintain clean dependencies
-
-### CI/CD
-- Keep pipelines focused
-- Use caching effectively
-- Monitor build times
-
-## Next Steps
-
-1. Read the detailed [Build System Documentation](../build-system/overview.md)
-2. Learn about [Docker Environments](../docker/base-image.md)
-3. Explore [CI/CD Features](../ci-cd/pipeline-overview.md)
-4. Review [Troubleshooting](../troubleshooting/common-issues.md)
+- Check PROJECT_TYPE setting
+- Verify runner availability
+- Review pipeline logs
 
 ## Quick Reference
 
@@ -224,25 +227,31 @@ CI/CD > Pipelines > [pipeline] > [job]
 # Build configuration
 export BUILD_TYPE=Release
 export PARALLEL_JOBS=4
-
-# Paths
-export BUILD_DIR="$(pwd)/build"
-export DIST_DIR="$(pwd)/dist"
 ```
 
 ### Make Targets
 | Target | Description |
 |--------|-------------|
-| `build` | Build all targets |
-| `test` | Run all tests |
-| `package` | Create packages |
-| `deploy` | Deploy packages |
-| `.build-cpp` | Build C++ only |
-| `.build-python` | Build Python only |
+| `build` | Build project |
+| `test` | Run tests |
+| `package` | Create package |
+| `deploy` | Deploy package |
 
-### Docker Images
-| Image | Use Case |
-|-------|----------|
-| `base:latest` | Base development tools |
-| `cpp:latest` | C++ development |
-| `python:latest` | Python development |
+### Available Runners
+| Tag | Purpose |
+|-----|----------|
+| `base` | Common development tools |
+| `cpp` | C++ development environment |
+| `python` | Python development environment |
+
+## Next Steps
+
+### For Developers
+1. Read [Build System Documentation](../build-system/overview.md)
+2. Review [Pipeline Overview](../ci-cd/pipeline-overview.md)
+3. Check [Troubleshooting Guide](../troubleshooting/common-issues.md)
+
+### For Build Engineers
+1. Study [Docker Configuration](../docker/base-image.md)
+2. Review [Runner Setup](../ci-cd/job-templates.md)
+3. Monitor [Performance Metrics](../ci-cd/parallel-execution.md)
