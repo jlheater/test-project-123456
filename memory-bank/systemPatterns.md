@@ -123,9 +123,45 @@ flowchart TD
            Git["git"]
            Make["make"]
            Curl["curl"]
+           Cache["ccache"]
+           Monitoring["prometheus-client"]
+       end
+       
+       subgraph Optimizations["Build Optimizations"]
+           Layer["Layer Caching"]
+           Deps["Dependency Cache"]
+           Artifacts["Build Artifacts"]
        end
        
        Common --> Tools
+       Tools --> Optimizations
+   ```
+
+3. **Cache Optimization Patterns**
+   ```mermaid
+   flowchart TD
+       subgraph Layers["Layer Strategy"]
+           OS["OS Dependencies"]
+           Tools["Build Tools"]
+           Lang["Language Tools"]
+           Deps["Project Dependencies"]
+       end
+
+       subgraph Cache["Cache Types"]
+           Docker["Docker Layer Cache"]
+           Runner["Runner Cache"]
+           Deps["Dependency Cache"]
+           Build["Build Cache"]
+       end
+
+       subgraph Invalidation["Cache Invalidation"]
+           Time["Time-based"]
+           Hash["Hash-based"]
+           Manual["Manual Clear"]
+       end
+
+       Layers --> Cache
+       Cache --> Invalidation
    ```
 
 ### Pipeline Design
