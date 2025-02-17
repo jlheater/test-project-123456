@@ -5,35 +5,45 @@
 ### Pipeline Architecture
 ```mermaid
 flowchart TD
-    subgraph Make["Makefile Targets"]
+    subgraph Make["Generic Makefile Targets"]
         B[build]
         T[test]
         P[package]
         D[deploy]
     end
 
-    subgraph Lang["Language Implementations"]
-        CPP["C++ (.build-cpp)"]
-        PY["Python (.build-python)"]
-        
-        subgraph CPP_Tools["C++ Tools"]
-            CMAKE["CMake/Ninja"]
-            CCACHE["ccache"]
+    subgraph Projects["Project Types"]
+        subgraph CPP["C++ Projects"]
+            MAKE["Make-based"]
+            CMAKE["CMake-based"]
+            
+            subgraph CPP_Tools["Build Tools"]
+                CCACHE["ccache"]
+                NINJA["ninja"]
+            end
         end
         
-        subgraph PY_Tools["Python Tools"]
-            VENV["virtualenv"]
-            PIP["pip"]
+        subgraph PY["Python Projects"]
+            PY39["Python 3.9 (setup.py)"]
+            PY311["Python 3.11 (toml)"]
+            
+            subgraph PY_Tools["Build Tools"]
+                VENV["virtualenv"]
+                PIP["pip"]
+                NOX["nox"]
+            end
         end
-        
-        CPP --> CPP_Tools
-        PY --> PY_Tools
     end
 
-    B --> CPP & PY
-    T --> CPP & PY
-    P --> CPP & PY
-    D --> CPP & PY
+    B & T & P & D --> CPP
+    B & T & P & D --> PY
+
+    subgraph Config["Project Configuration"]
+        TYPE["PROJECT_TYPE in .gitlab-ci.yml"]
+    end
+
+    TYPE --> CPP
+    TYPE --> PY
 ```
 
 ### Component Architecture
@@ -42,10 +52,10 @@ flowchart TD
     subgraph CI["GitLab CI/CD"]
         Base[".gitlab-ci.yml"]
         Templates[".gitlab/ci/*.yml"]
-        Jobs["Language Jobs"]
+        Config["PROJECT_TYPE"]
         
         Base --> Templates
-        Templates --> Jobs
+        Config --> Templates
     end
 
     subgraph Docker["Docker Images"]
@@ -57,41 +67,45 @@ flowchart TD
         BaseImg --> PyImg
     end
 
-    subgraph Make["Build System"]
-        Common["common.mk"]
-        CPPRules["cpp.mk"]
-        PyRules["python.mk"]
+    subgraph Make["Project Makefiles"]
+        Generic["Generic Targets"]
+        Impl["Project-Specific Implementation"]
         
-        Common --> CPPRules
-        Common --> PyRules
+        Generic --> Impl
     end
 
-    Jobs --> Docker
+    Templates --> Docker
     Docker --> Make
 ```
 
 ## Key Technical Decisions
 
 ### Build System Implementation
-1. **Modular Makefiles**
+1. **Project Makefiles**
    ```mermaid
    flowchart TD
-       M["Makefile"]
-       C["common.mk"]
-       CPP["cpp.mk"]
-       PY["python.mk"]
+       subgraph Project["Project Repository"]
+           M["Makefile"]
+           I["Implementation"]
+       end
        
-       M --> C
-       C --> CPP & PY
-       
-       subgraph Targets["Standard Targets"]
+       subgraph Targets["Generic Targets"]
            B["build"]
            T["test"]
            P["package"]
            D["deploy"]
        end
        
-       M --> Targets
+       M --> I
+       I --> Targets
+       
+       subgraph Type["Project Type"]
+           V["PROJECT_TYPE in .gitlab-ci.yml"]
+           R["Runner Selection"]
+       end
+       
+       V --> R
+       R --> I
    ```
 
 2. **Docker Structure**
@@ -152,10 +166,10 @@ flowchart TD
 ## Design Patterns
 
 ### Factory Pattern (Build System)
-- Makefile as abstract factory
-- Language-specific makefiles as concrete factories
-- Standardized target interface
-- Dynamic implementation selection
+- Project Makefile as concrete implementation
+- Generic target interface
+- Project-specific implementation
+- Runner selection via PROJECT_TYPE
 
 ### Builder Pattern (Docker)
 - Base image as foundation
@@ -170,32 +184,32 @@ flowchart TD
 - Standardized stage progression
 
 ### Strategy Pattern (Build Process)
-- Common build interface
-- Language-specific build strategies
-- Runtime selection based on project type
-- Configurable build options
+- Generic target interface
+- Project-specific build strategies
+- Build type determined by PROJECT_TYPE
+- Flexible implementation options
 
 ## Component Relationships
 
 ### Build System Integration
 ```mermaid
 flowchart LR
-    Make["Makefile"] --> Detect["Language Detection"]
-    Detect --> Strategy["Build Strategy"]
+    Project[".gitlab-ci.yml"] --> Type["PROJECT_TYPE"]
+    Type --> Runner["Runner Selection"]
     
-    subgraph Implementations
-        CPP["C++ Build"]
-        PY["Python Build"]
+    subgraph Implementation
+        Make["Project Makefile"]
+        Build["Build Strategy"]
     end
     
-    Strategy --> Implementations
+    Runner --> Implementation
     
     subgraph Docker
         Images["Container Images"]
         Cache["Build Cache"]
     end
     
-    Implementations --> Docker
+    Implementation --> Docker
 ```
 
 ### CI/CD Flow

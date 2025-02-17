@@ -7,105 +7,104 @@
 - ✅ Technical requirements defined
 - ✅ Build system architecture designed
 - ✅ Project intelligence captured in .clinerules
-- ✅ Base Makefile template implemented
-- ✅ Language-specific makefiles created
 - ✅ Docker build environments configured
 - ✅ GitLab CI/CD pipeline templates established
 - ✅ Parallel job execution configured
+- ✅ Documentation update plan created
 
 ## In Progress
-1. **Documentation**
-   - [ ] Implementation guides
-   - [ ] Contribution guidelines
-   - [ ] Troubleshooting documentation
-   - [ ] Usage examples
+1. **Documentation Restructuring**
+   - [ ] Foundation documents (README.md, overview.md)
+   - [ ] Developer vs Build Engineer guides
+   - [ ] Build system documentation
+   - [ ] Docker and CI/CD documentation
+   - [ ] Troubleshooting guides
 
-2. **Testing & Validation**
-   - [ ] Build system validation
-   - [ ] Pipeline testing
-   - [ ] Cross-platform verification
-   - [ ] Performance benchmarking
+2. **Build System Updates**
+   - [ ] Generic make target documentation
+   - [ ] Project type specification guidelines
+   - [ ] Migration guides
+   - [ ] Runner selection documentation
 
-3. **Advanced Features**
-   - [ ] Caching optimization
-   - [ ] Performance monitoring
-   - [ ] Security scanning
-   - [ ] Additional language support
+3. **Language-Specific Updates**
+   - [ ] C++ Make/CMake guidelines
+   - [ ] Python 3.9/3.11 setup guides
+   - [ ] Build patterns for each language
+   - [ ] Testing framework documentation
 
 ## What's Left to Build
 
-### Phase 1: Foundation
-- [x] Base Makefile template
-- [x] Docker configuration files
-- [x] Initial CI/CD pipeline
-- [x] Basic test framework
+### Phase 1: Documentation Foundation
+- [ ] Update README.md with new build approach
+- [ ] Revise overview.md with updated architecture
+- [ ] Create separate developer/engineer guides
+- [ ] Document generic make target system
 
-### Phase 2: Language Support
-- [x] C++ build integration
-- [x] Python build integration
-- [ ] C build integration
-- [ ] Perl build integration
-- [ ] Fortran build integration
+### Phase 2: Build System Documentation
+- [ ] Generic make target implementation guides
+- [ ] C++ build patterns (Make and CMake)
+- [ ] Python build patterns (3.9 and 3.11+)
+- [ ] Migration guidelines for existing projects
 
-### Phase 3: Advanced Features
-- [ ] Advanced caching strategies
-- [ ] Performance monitoring system
-- [ ] Security scanning integration
-- [ ] Automated documentation generation
-- [ ] Cross-project dependency management
+### Phase 3: Advanced Documentation
+- [ ] CI/CD pipeline configuration guides
+- [ ] Docker development workflows
+- [ ] Troubleshooting and debugging guides
+- [ ] Performance optimization documentation
 
 ## Known Issues
 
-### Documentation
-- Need comprehensive implementation guides
-- Usage examples required for each language
-- Troubleshooting guide needed
+### Documentation Structure
+- Current docs reflect old build system approach
+- Need clearer separation of user roles
+- Migration guides needed for build system changes
+- Better organization of troubleshooting info needed
 
-### Build System
-- Testing needed with real-world projects
-- Cross-platform validation required
-- Performance impact assessment needed
+### Build System Changes
+- Documentation needs update for generic targets
+- Clear distinction needed for different build types
+- Migration path needed for existing projects
 
-### Pipeline
-- Cache effectiveness to be measured
-- Artifact retention policies to be defined
-- Resource utilization to be monitored
+### Documentation Coverage
+- AWS/Docker integration details need clarification
+- Tool-specific troubleshooting needs expansion
+- Performance considerations need documentation
 
 ## Upcoming Milestones
 
-### Milestone 1: Initial Setup ✅
-- [x] Create Memory Bank structure
-- [x] Define architecture
-- [x] Document technical requirements
-- [x] Implement base Makefile
+### Milestone 1: Foundation Updates
+- [ ] Update core documentation structure
+- [ ] Implement new build system docs
+- [ ] Create role-specific guides
+- [ ] Revise architecture documentation
 
-### Milestone 2: Basic Pipeline ✅
-- [x] Configure GitLab CI/CD
-- [x] Set up Docker builds
-- [x] Implement basic testing
-- [x] Establish CI/CD structure
+### Milestone 2: Build System Documentation
+- [ ] Document generic make targets
+- [ ] Create language-specific guides
+- [ ] Develop migration guidelines
+- [ ] Update CI/CD documentation
 
-### Milestone 3: Language Integration
-- [x] C++ support
-- [x] Python support
-- [ ] Additional language support
-- [ ] Integration testing
+### Milestone 3: Workflow Documentation
+- [ ] Developer workflow guides
+- [ ] Build engineer procedures
+- [ ] Docker development documentation
+- [ ] Testing and validation guides
 
-### Milestone 4: Advanced Features
-- [ ] Implement advanced caching
-- [ ] Set up monitoring
-- [ ] Enable security scanning
-- [ ] Automate documentation
+### Milestone 4: Finalization
+- [ ] Complete troubleshooting documentation
+- [ ] Validate all documentation
+- [ ] Gather user feedback
+- [ ] Implement final adjustments
 
-## Performance Metrics
+## Documentation Metrics
 Currently tracking:
-- Build times (initial implementation)
-- Pipeline execution times
-- Job parallelization effectiveness
-- Basic cache hit rates
+- Document completion status
+- Coverage of key topics
+- User role separation
+- Implementation details
 
 To be implemented:
-- Detailed resource utilization tracking
-- Cross-platform performance metrics
-- Language-specific build metrics
-- Cache effectiveness analysis
+- Documentation testing procedures
+- User feedback collection
+- Usage analytics
+- Regular review cycles

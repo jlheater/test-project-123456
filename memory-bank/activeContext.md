@@ -1,22 +1,23 @@
 # Active Context
 
 ## Current Focus
-- Refining CI/CD pipeline implementation
-- Testing and validating build system
-- Expanding documentation for implementations
+- Updating documentation to reflect simplified build system
+- Implementing generic make targets across projects
+- Clarifying developer vs build engineer workflows
 
 ## Recent Changes
-- Implemented complete build system with language-agnostic Makefile interface
-- Created Docker build environments for base, C++, and Python
-- Established modular GitLab CI/CD pipeline structure
-- Set up parallel job execution for different languages
+- Identified need for documentation restructure
+- Planned transition to generic make targets (build, test, etc.)
+- Developed separation of developer and build engineer guides
+- Created comprehensive documentation update plan
 
 ## Active Decisions
 
 ### Build System Implementation
-- Makefile orchestration with common.mk, cpp.mk, and python.mk
-- Language-specific build hooks with standardized targets
-- Containerized build environments with optimized Dockerfiles
+- Single Makefile per project with generic targets
+- Project type specification in .gitlab-ci.yml
+- Standardized target names across all projects
+- Support for both legacy and new build patterns
 
 ### Pipeline Implementation
 - Modular CI/CD configuration with template inheritance
@@ -31,45 +32,47 @@
 - Standardized environment variables
 
 ## Next Steps
-1. **Testing & Validation**
-   - Validate build system with real projects
-   - Test CI/CD pipeline configurations
-   - Verify cross-platform compatibility
+1. **Documentation Updates**
+   - Update foundation documents (README.md, overview.md)
+   - Split installation guide into developer/build engineer sections
+   - Revise build system documentation for new approach
+   - Update Docker and CI/CD documentation
+   - Enhance troubleshooting guides
 
-2. **Documentation**
-   - Create implementation guides
-   - Document troubleshooting procedures
-   - Update architecture diagrams
+2. **Build System Transition**
+   - Document generic make target implementation
+   - Create migration guides for existing projects
+   - Update CI/CD templates for PROJECT_TYPE specification
 
-3. **Expansion**
-   - Add support for C, Perl, and Fortran
-   - Implement advanced caching strategies
-   - Set up performance monitoring
+3. **Workflow Documentation**
+   - Create clear developer guides for day-to-day operations
+   - Document build engineer procedures for infrastructure changes
+   - Update Docker development workflows
 
 ## Current Considerations
-1. **Build System**
-   - Testing language-specific implementations
-   - Validating target dependencies
-   - Ensuring error handling effectiveness
+1. **Documentation Structure**
+   - Separating developer and build engineer concerns
+   - Maintaining clear upgrade paths for Python/C++ projects
+   - Ensuring comprehensive troubleshooting coverage
 
-2. **Pipeline Performance**
-   - Monitoring parallel job execution
-   - Evaluating artifact management
-   - Assessing cache performance
+2. **Build System Clarity**
+   - Making generic targets intuitive
+   - Supporting both Make and CMake for C++
+   - Handling Python 3.9 and 3.11+ configurations
 
-3. **Documentation**
-   - Implementation details documentation
-   - Usage guides for developers
-   - Troubleshooting procedures
+3. **Implementation Guidelines**
+   - Clear distinction between current and new project setups
+   - Docker development workflow documentation
+   - GitLab runner selection and configuration
 
 ## Implementation Insights
-- Makefile targets provide clean abstraction
-- Docker multi-stage builds improve efficiency
-- Template inheritance reduces CI/CD complexity
-- Parallel jobs improve pipeline performance
+- Generic make targets simplify maintenance
+- Explicit project type improves pipeline clarity
+- Separated documentation enhances usability
+- Clear upgrade paths aid project evolution
 
 ## Open Questions
-- Performance impact of containerization
-- Optimal artifact retention policies
-- Cross-project dependency management
-- Advanced caching strategies for specific languages
+- Best practices for transitioning existing projects
+- Optimal documentation organization and structure
+- Documentation testing and validation procedures
+- Timeline for Python/C++ build system updates
