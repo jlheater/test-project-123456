@@ -1,46 +1,60 @@
 # Active Context
 
 ## Current Focus
-- Documenting completed Docker and CI/CD implementations
-- Creating migration guides for build system transition
-- Updating documentation structure and organization
-- Refining developer and build engineer workflows
+- Restructuring CI/CD pipeline organization from language-based to stage-based
+- Enhancing Makefile documentation with comprehensive guides
+- Creating template repositories for Python and C++ projects
+- Ensuring diagram consistency across all documentation
+- Adding Python 3.6 compatibility support
 
 ## Recent Changes
-- Completed Docker environment configurations
-- Finalized GitLab CI/CD pipeline templates
-- Identified need for documentation restructure
-- Planned transition to generic make targets (build, test, etc.)
-- Developed separation of developer and build engineer guides
-- Created comprehensive documentation update plan
+- Decided to reorganize CI/CD pipeline structure by stages instead of languages
+- Planned creation of detailed Makefile guide and documentation
+- Identified need for template repositories to replace make/ directory
+- Updated build system architecture to use root-level Makefiles with common targets
+- Enhanced Makefile examples with comprehensive documentation
+- Added support for Python 3.6 alongside 3.9 and 3.11
+- Removed caching strategy from scope
+- Added lint and format make targets
 
 ## Active Decisions
 
 ### Build System Implementation
-- Single Makefile per project with generic targets
+- Single Makefile per project with generic targets (build, test, package, lint, format)
 - Project type specification in .gitlab-ci.yml
 - Standardized target names across all projects
 - Support for both legacy and new build patterns
 
 ### Pipeline Implementation
-- Modular CI/CD configuration with template inheritance
-- Parallel job execution for improved performance
-- Docker-based runner configurations
-- Build artifacts and test results management
+- Stage-based CI/CD organization (.gitlab/ci/stages/)
+- Job-specific configurations (.gitlab/ci/jobs/)
+- Shared templates for common patterns
+- Stage-oriented pipeline structure for better clarity
 
 ### Infrastructure Design
 - Base image for common tools and utilities
 - Language-specific images extending base
-- Shared caching strategies
 - Standardized environment variables
 
 ## Next Steps
-1. **Documentation Updates**
-   - Update foundation documents (README.md, overview.md)
-   - Split installation guide into developer/build engineer sections
-   - Revise build system documentation for new approach
-   - Update Docker and CI/CD documentation
-   - Enhance troubleshooting guides
+1. **CI/CD Reorganization**
+   - Create stage-based YAML structure
+   - Implement job-specific configurations
+   - Update pipeline templates
+   - Document new organization
+
+2. **Makefile Documentation**
+   - Create comprehensive makefile-guide.md
+   - Document .PHONY and target explanations
+   - Document lint and format targets
+   - Establish best practices
+   - Provide reference implementations
+
+3. **Template Repositories**
+   - Create template-cpp-project repository
+   - Create template-python-project repository with multi-Python support (3.6, 3.9, 3.11)
+   - Document template usage
+   - Provide migration guides
 
 2. **Build System Transition**
    - Document generic make target implementation
@@ -61,21 +75,25 @@
 2. **Build System Clarity**
    - Making generic targets intuitive
    - Supporting both Make and CMake for C++
-   - Handling Python 3.9 and 3.11+ configurations
+   - Handling Python versions (3.6, 3.9, 3.11) configurations
+   - Implementing lint and format targets consistently
 
 3. **Implementation Guidelines**
    - Clear distinction between current and new project setups
    - Docker development workflow documentation
    - GitLab runner selection and configuration
+   - Python version compatibility requirements
 
 ## Implementation Insights
 - Generic make targets simplify maintenance
 - Explicit project type improves pipeline clarity
 - Separated documentation enhances usability
 - Clear upgrade paths aid project evolution
+- Format and lint targets ensure code quality
 
 ## Open Questions
-- Best practices for transitioning existing projects
-- Optimal documentation organization and structure
-- Documentation testing and validation procedures
-- Timeline for Python/C++ build system updates
+- Impact of stage-based CI/CD organization on existing projects
+- Best approach for template repository maintenance
+- Process for keeping Makefile documentation current
+- Timeline for deprecating make/ directory
+- Python package version constraints for 3.6 compatibility

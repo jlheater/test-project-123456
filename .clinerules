@@ -5,7 +5,7 @@
 ### Build System Structure
 - Use Makefile as primary orchestrator
 - Language-specific implementations abstracted behind common interface
-- Standard targets: build, test, package, deploy
+- Standard targets: build, test, package, deploy, lint, format
 - Common interface must be maintained across all language implementations
 
 ### Documentation Standards
@@ -17,8 +17,8 @@
 ### Development Workflow
 - Containerized development environments
 - Docker-based build isolation
-- Cache optimization at multiple levels
 - Cross-platform compatibility requirements
+- Multi-version Python support (3.6, 3.9, 3.11)
 
 ## Key Implementation Patterns
 
@@ -27,18 +27,20 @@
 - Language-agnostic interface design
 - Support for parallel execution
 - Clear error reporting essential
+- Consistent target naming and behavior
 
 ### Docker Patterns
 - Multi-stage builds preferred
-- Layer optimization required
 - Minimal base images
-- Efficient cache utilization
+- Standardized environments
+- Version-specific configurations
 
 ### Pipeline Patterns
 - Template-based configurations
 - Environment-specific overrides
 - Fail-fast behavior
 - Comprehensive logging
+- Stage-based organization
 
 ## Project Preferences
 
@@ -62,11 +64,11 @@
 
 ## Known Challenges
 
-### Cache Management
-- Complex invalidation strategies needed
-- Multiple cache layers to coordinate
-- Language-specific dependency caching
-- Build artifact caching
+### Python Version Support
+- Multiple version compatibility (3.6, 3.9, 3.11)
+- Package version constraints
+- Tool compatibility across versions
+- Testing across versions
 
 ### Cross-Platform Support
 - POSIX compliance required
@@ -78,24 +80,27 @@
 - 15-minute maximum build time
 - Parallel execution capability
 - Resource-aware scheduling
-- Efficient cache utilization
+- Build target optimization
 
 ## Learning Notes
 
 ### Project Evolution
 - Started with Memory Bank structure
 - Architecture design prioritized
-- Build system implementation pending
-- Language support to be added incrementally
+- Stage-based pipeline implementation
+- Language support implementation
+- Python version compatibility added
 
 ### Critical Paths
 - Makefile template is foundation
 - Docker configurations essential
 - Pipeline setup dependent on both
 - Language support builds on base
+- Version compatibility management
 
 ### Tool Usage
 - Memory Bank updates for all changes
 - Mermaid for architecture documentation
 - Docker for build isolation
 - GitLab for CI/CD orchestration
+- Version-specific tooling

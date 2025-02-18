@@ -7,33 +7,33 @@
    - GitLab for repository management and CI/CD
    - GitLab Container Registry for image storage
    - GitLab Runners with Docker executor
-   - Template-based pipeline configuration
+   - Stage-based pipeline organization
 
-2. **Build Systems**
-   - Make for build orchestration
+2. **Build System**
+   - Make for unified build orchestration:
+     - Standard targets (build, test, package, lint, format)
+     - Language-agnostic interface
+     - Project-specific implementations
    - Language-specific build tools:
-     - CMake for C/C++ with Ninja generator
+     - CMake for C/C++
      - setuptools/pip for Python
-     - Traditional Make for C
-     - Module::Build for Perl
-     - FPM for Fortran
+     - Project template repositories
 
 3. **Containerization**
    - Docker with multi-stage builds
    - Language-specific optimized images
-   - Build cache optimization
    - Layer minimization strategies
 
 4. **Configuration Management**
-   - Modular Makefile structure
+   - Project-specific Makefiles
    - Environment-based configurations
    - Docker build arguments
    - GitLab CI/CD variables
 
 5. **Build Orchestration**
-   - Parallel job execution
-   - Language-specific implementations
+   - Stage-based CI/CD organization
    - Standardized target interface
+   - Template repositories
    - Build artifact management
 
 ## Development Setup
@@ -45,18 +45,20 @@ mindmap
     Version Control
       Git >= 2.x
       GitLab CLI
-    Build Tools
+    Build System
       Make >= 4.x
-      CMake >= 3.25
+      CMake >= 3.27
       Python Tools
-      Ninja Build
-    Containers
-      Docker >= 20.x
-      Docker Compose
+    Templates
+      CPP Template
+      Python Template
+    CI/CD
+      Stage-based Pipeline
+      Docker >= 24.x
     Languages
-      Python >= 3.9
+      Python >= 3.6
       C++17/20
-      Clang/GCC
+      Clang/GCC >= 12.0
 ```
 
 ### Environment Variables
@@ -69,7 +71,6 @@ mindmap
 - `DOCKER_TAG` - Image tag (default: latest)
 - `BUILD_DIR` - Build output directory
 - `DIST_DIR` - Distribution artifacts directory
-- `CCACHE_DIR` - Compiler cache directory
 - `VIRTUAL_ENV` - Python virtual environment path
 - `PYTHONPATH` - Python module search path
 - `PARALLEL_JOBS` - Number of parallel jobs
@@ -82,27 +83,20 @@ mindmap
    - Support for parallel builds
    - Cross-platform compatibility
    - Clear error reporting
-   - Modular include structure
+   - Project-specific implementation
    - Language-agnostic interface
+   - Standardized target names
 
 2. **Container Requirements**
    - Debian bullseye-slim base images
-   - Multi-stage build optimization with layer ordering
-   - Advanced caching strategy:
-     - Layer caching for dependencies
-     - Build artifact caching
-     - Compiler cache integration
+   - Multi-stage build optimization
    - Build argument flexibility with strong defaults
-   - Common base image with monitoring support
+   - Common base image
    - Health checks and resource limits
-   - Prometheus metrics integration
-   - Container security:
-     - Automated vulnerability scanning
-     - Minimal runtime permissions
-     - Regular base image updates
 
 3. **Pipeline Requirements**
-   - Parallel job execution
+   - Stage-based organization
+   - Common job templates
    - Artifact management
    - Coverage reporting
    - Build matrices
@@ -115,22 +109,19 @@ mindmap
 - Git >= 2.40
 - Docker >= 24.x
 - Make >= 4.4
-- Python >= 3.11
+- Python >= 3.6
 - CMake >= 3.27
-- Ninja Build >= 1.11
-- prometheus-client >= 0.17
+- pytest >= 7.4
 
 #### Language Dependencies
 1. **C++**
    - GCC >= 12.0 or Clang >= 16.0
    - CMake >= 3.27
-   - Ninja build system >= 1.11
-   - ccache >= 4.8
    - Boost libraries >= 1.83 (optional)
    - GoogleTest >= 1.14 (for testing)
 
 2. **Python**
-   - Python 3.11 or higher
+   - Python 3.6 or higher
    - virtualenv/venv >= 20.24
    - pip >= 23.2 with wheel support
    - pytest >= 7.4 for testing
@@ -143,18 +134,16 @@ mindmap
 ### Build Performance
 - Maximum build time: 15 minutes
 - Parallel job execution
-- Compiler cache utilization
-- Layer cache optimization
 - Resource-aware scheduling
 
 ### Pipeline Performance
-- Parallel language builds
+- Stage-based execution
 - Efficient artifact handling
-- Template-based configuration
+- Common job templates
 - Smart dependency management
 - Fast feedback cycles
 
-## Security Considerations
+## Development Process
 
 ### Access Control
 - Protected CI/CD variables
@@ -162,44 +151,15 @@ mindmap
 - Runner security
 - Environment isolation
 
-### Container Security
+### Container Management
 - Minimal base images
 - Regular security updates
-- Layer optimization
 - Multi-stage builds
 - Reduced attack surface
 
-### CI/CD Security
+### CI/CD Process
 - Protected branches
 - Secure variables
 - Build isolation
-- Artifact security
+- Artifact management
 - Environment controls
-
-## Monitoring & Logging
-
-### Build Monitoring
-- Job execution times (via Prometheus)
-- Cache hit rates by language and stage
-- Resource utilization metrics
-- Error tracking and analysis
-- Build success rates and trends
-- Compiler cache efficiency
-- Layer cache effectiveness
-- Memory and CPU usage patterns
-
-### Pipeline Monitoring
-- Stage completion times with historical trends
-- Runner performance and load balancing
-- Job parallelization efficiency
-- Resource consumption patterns
-- Cache effectiveness by type:
-  - Docker layer cache
-  - Compiler cache
-  - Dependency cache
-  - Build artifact cache
-- Prometheus metrics for:
-  - Build durations
-  - Resource usage
-  - Cache hit rates
-  - Error frequencies

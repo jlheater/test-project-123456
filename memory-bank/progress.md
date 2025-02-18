@@ -9,68 +9,77 @@
 - ✅ Project intelligence captured in .clinerules
 - ✅ Docker build environments configured and validated
 - ✅ Language-specific Docker images implemented
-- ✅ GitLab CI/CD pipeline templates established and tested
+- ✅ Stage-based CI/CD pipeline structure designed
 - ✅ Parallel job execution configured and optimized
-- ✅ Build artifact caching strategy implemented
 - ✅ Documentation update plan created
+- ✅ Template repository structure designed
+- ✅ Generic Makefile targets standardized (build, test, package, lint, format)
 
 ## In Progress
-1. **Documentation Restructuring**
-   - [ ] Foundation documents (README.md, overview.md)
-   - [ ] Developer vs Build Engineer guides
-   - [ ] Build system documentation
-   - [ ] Docker and CI/CD documentation
-   - [ ] Troubleshooting guides
+1. **Pipeline Restructuring**
+   - [ ] Create stage-based YAML files
+   - [ ] Implement job-specific configurations
+   - [ ] Update pipeline templates
+   - [ ] Document new organization
 
-2. **Build System Updates**
-   - [ ] Generic make target documentation
-   - [ ] Project type specification guidelines
-   - [ ] Migration guides
-   - [ ] Runner selection documentation
+2. **Makefile Documentation**
+   - [ ] Create comprehensive makefile-guide.md
+   - [ ] Document .PHONY and target explanations
+   - [ ] Document lint and format targets
+   - [ ] Establish best practices
+   - [ ] Provide reference implementations
 
-3. **Language-Specific Updates**
-   - [ ] C++ Make/CMake guidelines
-   - [ ] Python 3.9/3.11 setup guides
-   - [ ] Build patterns for each language
-   - [ ] Testing framework documentation
+3. **Template Repository Setup**
+   - [ ] Create template-cpp-project
+   - [ ] Create template-python-project with multi-Python support (3.6, 3.9, 3.11)
+   - [ ] Document template usage
+   - [ ] Provide migration guides
+   - [ ] Document Python version compatibility requirements
 
 ## What's Left to Build
 
-### Phase 1: Documentation Foundation
-- [ ] Update README.md with new build approach
-- [ ] Revise overview.md with updated architecture
-- [ ] Create separate developer/engineer guides
-- [ ] Document generic make target system
+### Phase 1: Pipeline Reorganization
+- [ ] Implement stage-based YAML structure
+- [ ] Create job template library
+- [ ] Update CI/CD configuration
+- [ ] Document new pipeline organization
 
-### Phase 2: Build System Documentation
-- [ ] Generic make target implementation guides
-- [ ] C++ build patterns (Make and CMake)
-- [ ] Python build patterns (3.9 and 3.11+)
-- [ ] Migration guidelines for existing projects
+### Phase 2: Makefile Implementation
+- [ ] Create makefile-guide.md with best practices
+- [ ] Document .PHONY and target explanations
+- [ ] Document lint and format targets
+- [ ] Provide example implementations
+- [ ] Create migration guide for existing projects
 
-### Phase 3: Advanced Documentation
-- [ ] CI/CD pipeline configuration guides
-- [ ] Docker development workflows
-- [ ] Troubleshooting and debugging guides
-- [ ] Performance optimization documentation
+### Phase 3: Template Repositories
+- [ ] Set up template-cpp-project
+- [ ] Set up template-python-project with version support
+- [ ] Create template documentation
+- [ ] Establish maintenance procedures
+- [ ] Document Python version compatibility
 
 ## Known Issues
 
-### Documentation Structure
-- Current docs reflect old build system approach
-- Need clearer separation of user roles
-- Migration guides needed for build system changes
-- Better organization of troubleshooting info needed
+### Documentation Updates
+- Diagrams updated to reflect stage-based pipeline
+- Template repository structure documented
+- Migration guides needed for existing projects
+- New pipeline organization needs documentation
+- Python version compatibility documentation needed
 
-### Build System Changes
-- Documentation needs update for generic targets
-- Clear distinction needed for different build types
-- Migration path needed for existing projects
+### Build System Evolution
+- Moving from make/ directory to template repos
+- Creating standardized Makefile structure
+- Documenting best practices and standards
+- Migration path clearly defined
+- Multi-version Python support needed
 
-### Documentation Coverage
-- AWS/Docker integration details need clarification
-- Tool-specific troubleshooting needs expansion
-- Performance considerations need documentation
+### Infrastructure Changes
+- Stage-based pipeline implementation pending
+- Template repositories to be created
+- Makefile documentation to be enhanced
+- Documentation testing needed
+- Python version compatibility to be implemented
 
 ## Upcoming Milestones
 
@@ -79,24 +88,28 @@
 - [ ] Implement new build system docs
 - [ ] Create role-specific guides
 - [ ] Revise architecture documentation
+- [ ] Document Python version support
 
 ### Milestone 2: Build System Documentation
 - [ ] Document generic make targets
 - [ ] Create language-specific guides
 - [ ] Develop migration guidelines
 - [ ] Update CI/CD documentation
+- [ ] Document lint and format targets
 
 ### Milestone 3: Workflow Documentation
 - [ ] Developer workflow guides
 - [ ] Build engineer procedures
 - [ ] Docker development documentation
 - [ ] Testing and validation guides
+- [ ] Python version compatibility guides
 
 ### Milestone 4: Finalization
 - [ ] Complete troubleshooting documentation
 - [ ] Validate all documentation
 - [ ] Gather user feedback
 - [ ] Implement final adjustments
+- [ ] Verify Python version support
 
 ## Documentation Metrics
 Currently tracking:
@@ -104,6 +117,8 @@ Currently tracking:
 - Coverage of key topics
 - User role separation
 - Implementation details
+- Python version compatibility
+- Target implementation consistency
 
 To be implemented:
 - Documentation testing procedures

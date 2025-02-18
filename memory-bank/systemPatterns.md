@@ -10,20 +10,18 @@ flowchart TD
         T[test]
         P[package]
         D[deploy]
+        L[lint]
+        F[format]
     end
 
     subgraph Projects["Project Types"]
         subgraph CPP["C++ Projects"]
             MAKE["Make-based"]
             CMAKE["CMake-based"]
-            
-            subgraph CPP_Tools["Build Tools"]
-                CCACHE["ccache"]
-                NINJA["ninja"]
-            end
         end
         
         subgraph PY["Python Projects"]
+            PY36["Python 3.6 (setup.py)"]
             PY39["Python 3.9 (setup.py)"]
             PY311["Python 3.11 (toml)"]
             
@@ -35,8 +33,8 @@ flowchart TD
         end
     end
 
-    B & T & P & D --> CPP
-    B & T & P & D --> PY
+    B & T & P & D & L & F --> CPP
+    B & T & P & D & L & F --> PY
 
     subgraph Config["Project Configuration"]
         TYPE["PROJECT_TYPE in .gitlab-ci.yml"]
@@ -51,8 +49,14 @@ flowchart TD
 flowchart TD
     subgraph CI["GitLab CI/CD"]
         Base[".gitlab-ci.yml"]
-        Templates[".gitlab/ci/*.yml"]
+        Templates[".gitlab/ci/"]
         Config["PROJECT_TYPE"]
+        
+        subgraph Templates
+            Stages["stages/*.yml"]
+            Jobs["jobs/*.yml"]
+            Common["templates/*.yml"]
+        end
         
         Base --> Templates
         Config --> Templates
@@ -94,6 +98,9 @@ flowchart TD
            T["test"]
            P["package"]
            D["deploy"]
+           L["lint"]
+           F["format"]
+           H["help"]
        end
        
        M --> I
@@ -123,80 +130,69 @@ flowchart TD
            Git["git"]
            Make["make"]
            Curl["curl"]
-           Cache["ccache"]
-           Monitoring["prometheus-client"]
-       end
-       
-       subgraph Optimizations["Build Optimizations"]
-           Layer["Layer Caching"]
-           Deps["Dependency Cache"]
-           Artifacts["Build Artifacts"]
        end
        
        Common --> Tools
-       Tools --> Optimizations
-   ```
-
-3. **Cache Optimization Patterns**
-   ```mermaid
-   flowchart TD
-       subgraph Layers["Layer Strategy"]
-           OS["OS Dependencies"]
-           Tools["Build Tools"]
-           Lang["Language Tools"]
-           Deps["Project Dependencies"]
-       end
-
-       subgraph Cache["Cache Types"]
-           Docker["Docker Layer Cache"]
-           Runner["Runner Cache"]
-           Deps["Dependency Cache"]
-           Build["Build Cache"]
-       end
-
-       subgraph Invalidation["Cache Invalidation"]
-           Time["Time-based"]
-           Hash["Hash-based"]
-           Manual["Manual Clear"]
-       end
-
-       Layers --> Cache
-       Cache --> Invalidation
    ```
 
 ### Pipeline Design
-1. **Template Structure**
-   ```mermaid
-   flowchart LR
-       Base["base.gitlab-ci.yml"]
-       CPP["cpp.gitlab-ci.yml"]
-       PY["python.gitlab-ci.yml"]
-       Main[".gitlab-ci.yml"]
-       
-       Base --> CPP & PY
-       CPP & PY --> Main
-   ```
-
-2. **Job Organization**
+1. **Stage-Based Structure**
    ```mermaid
    flowchart TD
-       Pre["Pre Stage"]
-       Build["Build Stage"]
-       Test["Test Stage"]
-       Package["Package Stage"]
-       Deploy["Deploy Stage"]
+       Base[".gitlab/ci/templates/default.yml"]
+       Stages[".gitlab/ci/stages/*.yml"]
+       Jobs[".gitlab/ci/jobs/*.yml"]
+       Main[".gitlab-ci.yml"]
        
-       Pre --> Build
-       Build --> Test
-       Test --> Package
-       Package --> Deploy
+       Base --> Stages & Jobs
+       Stages & Jobs --> Main
        
-       subgraph Parallel["Parallel Execution"]
-           CPP["C++ Jobs"]
-           PY["Python Jobs"]
+       subgraph Stages["Stage Definitions"]
+           Build["build.yml"]
+           Test["test.yml"]
+           Lint["lint.yml"]
+           Format["format.yml"]
+           Package["package.yml"]
+           Deploy["deploy.yml"]
        end
        
-       Build --> Parallel
+       subgraph Jobs["Job Definitions"]
+           Compile["compile.yml"]
+           UnitTest["unit-tests.yml"]
+           IntegTest["integration-tests.yml"]
+           CodeQuality["code-quality.yml"]
+           Pack["packaging.yml"]
+       end
+   ```
+
+2. **Template Repository Structure**
+   ```mermaid
+   flowchart TD
+       subgraph Templates["Template Repositories"]
+           CPP["template-cpp-project"]
+           PY["template-python-project"]
+           
+           subgraph Common["Common Structure"]
+               Make["Makefile"]
+               Doc["docs/"]
+               Read["README.md"]
+           end
+           
+           CPP --> Common
+           PY --> Common
+       end
+       
+       subgraph Targets["Standard Targets"]
+           Build["build"]
+           Test["test"]
+           Package["package"]
+           Deploy["deploy"]
+           Lint["lint"]
+           Format["format"]
+           Help["help"]
+       end
+       
+       Make --> Targets
    ```
 
 ## Design Patterns
@@ -214,10 +210,10 @@ flowchart TD
 - Language-specific tools added progressively
 
 ### Template Method Pattern (CI/CD)
-- Base CI configuration defines workflow
-- Language-specific configurations implement details
+- Stage-based pipeline organization
 - Common job templates
 - Standardized stage progression
+- Job-specific implementations
 
 ### Strategy Pattern (Build Process)
 - Generic target interface
@@ -242,7 +238,6 @@ flowchart LR
     
     subgraph Docker
         Images["Container Images"]
-        Cache["Build Cache"]
     end
     
     Implementation --> Docker
@@ -251,17 +246,32 @@ flowchart LR
 ### CI/CD Flow
 ```mermaid
 flowchart LR
-    Trigger["Pipeline Trigger"] --> Pre["Docker Builds"]
-    Pre --> Build["Language Builds"]
-    Build --> Test["Parallel Tests"]
-    Test --> Package["Packaging"]
-    Package --> Deploy["Deployment"]
+    Trigger["Pipeline Trigger"] --> Stages["Stage Execution"]
     
-    subgraph Cache["Caching"]
-        DC["Docker Layers"]
-        BC["Build Artifacts"]
-        TC["Test Results"]
+    subgraph Stages["Pipeline Stages"]
+        Build["Build Stage"]
+        Test["Test Stage"]
+        Lint["Lint Stage"]
+        Format["Format Stage"]
+        Package["Package Stage"]
+        Deploy["Deploy Stage"]
+        
+        Build --> Test
+        Test --> Lint
+        Lint --> Format
+        Format --> Package
+        Package --> Deploy
     end
     
-    Build --> Cache
-    Test --> Cache
+    subgraph Jobs["Stage Jobs"]
+        Compile["Compilation"]
+        UnitTest["Unit Tests"]
+        IntegTest["Integration Tests"]
+        CodeQuality["Code Quality"]
+        Pack["Packaging"]
+    end
+    
+    Build --> Compile
+    Test --> UnitTest & IntegTest
+    Lint & Format --> CodeQuality
+    Package --> Pack
